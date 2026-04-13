@@ -1,184 +1,360 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* Глобальные настройки */
+:root {
+  --black: #0a0a0a;
+  --gold: #c5a059;
+  --gray: #1a1a1a;
+  --text-muted: #888;
+}
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+body {
+  margin: 0;
+  background-color: var(--black);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Боковое меню */
+.side-nav {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 80px;
+  height: 100vh;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  background: var(--black);
+  z-index: 100;
+}
+
+.logo {
+  color: var(--gold);
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  letter-spacing: -1px;
+  margin-bottom: 20px; 
+  cursor: pointer;
+}
+.nav-auth {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  cursor: pointer;
+  margin-bottom: 60px; 
+  transition: 0.3s;
+  font-weight: 600;
+}
+.nav-auth:hover {
+  color: white;
+}
+.nav-links {
+  writing-mode: vertical-rl;
+  display: flex;
+  gap: 30px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: inherit;
+  transition: 0.3s;
+}
+
+.nav-links a:hover {
+  color: var(--gold);
+}
+
+/* Главный блок */
+.main-content {
+  margin-left: 80px;
+  min-height: 100vh;
 }
 
 .hero {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  padding: 0 10%;
   position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
 }
-
-#center {
+.hero-text {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
+  align-items: center;   
+  text-align: center;    
 }
 
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
+.hero-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 5rem;
+  line-height: 1.1;
+  margin-bottom: 30px;
+}
+
+.hero-title span {
+  color: var(--gold);
+  font-style: italic;
+}
+
+.hero-description {
+  color: var(--text-muted);
+  max-width: 450px;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0 auto 40px auto;
+}
+
+/* Кнопки */
+.btn-primary {
+  background: var(--gold);
+  color: black;
+  border: none;
+  padding: 15px 40px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.4s;
+}
+
+.btn-primary:hover {
+  background: white;
+}
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 5px 0;
+  margin-left: 20px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: 0.3s;
+}
+.btn-secondary:hover {
+  border-color: var(--gold);
+}
+
+.catalog-section {
+  padding: 100px 5%;
+  background: #0d0d0d;
+}
+
+.catalog-header {
+  margin-bottom: 80px;
   text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
 }
 
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 3.5rem;
+  margin: 0;
 }
 
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
+.section-subtitle {
+  color: var(--gold);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 4px;
+  margin-top: 10px;
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+.art-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 60px 40px;
 }
 
-.ticks {
+.art-card {
+  cursor: pointer;
+}
+
+.art-image-container {
   position: relative;
+  overflow: hidden;
+  height: 450px;
+  background: #151515;
+}
+
+.art-image {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+.art-card:hover .art-image {
+  transform: scale(1.05);
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+.sold-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0,0,0,0.7);
+  padding: 5px 15px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.art-info {
+  margin-top: 25px;
+}
+
+.art-artist {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+}
+
+.art-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  margin: 8px 0;
+  font-weight: 400;
+}
+
+.art-price {
+  color: var(--gold);
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #111;
+  padding: 50px;
+  width: 100%; max-width: 400px;
+  border: 1px solid var(--gold);
+  position: relative;
+}
+.modal-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem; margin-bottom: 30px; text-align: center;
+}
+.modal-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #333;
+  color: white;
+  padding: 10px 0; margin-bottom: 30px;
+  outline: none;
+}
+.modal-input:focus { border-color: var(--gold); }
+.close-btn {
+  position: absolute; top: 20px; right: 20px;
+  background: none; border: none; color: white; cursor: pointer;
+}
+.w-full { width: 100%; }
+
+.admin-panel {
+  padding: 50px 10%;
+  background: #111;
+  border-bottom: 1px solid var(--gold);
+  margin-bottom: 50px;
+}
+
+.delete-btn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 0, 0, 0.6);
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.art-card:hover .delete-btn {
+  opacity: 1;
+}
+
+.auth-toggle-text {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: pointer;
+}
+.auth-toggle-text span { color: var(--gold); text-decoration: underline; }
+
+.admin-panel-users {
+  padding: 60px 5%;
+  background: #111;
+  border-bottom: 1px solid #222;
+}
+
+.admin-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  margin-bottom: 40px;
+  color: var(--gold);
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 800px;
+}
+
+.user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: #0a0a0a;
+  border: 1px solid #222;
+  transition: 0.3s;
+}
+
+.user-item:hover { border-color: var(--gold); }
+
+.user-info { display: flex; gap: 30px; align-items: center; }
+
+.user-id { color: #444; font-size: 12px; }
+.user-name { font-weight: 500; letter-spacing: 1px; }
+.user-role { 
+  font-size: 10px; text-transform: uppercase; 
+  padding: 2px 8px; border-radius: 2px; background: #222;
+}
+.user-role.admin { color: var(--gold); border: 1px solid var(--gold); }
+
+.btn-delete-user {
+  background: transparent;
+  color: #ff4d4d;
+  border: 1px solid #ff4d4d;
+  padding: 5px 15px;
+  font-size: 11px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.btn-delete-user:hover {
+  background: #ff4d4d;
+  color: white;
 }
