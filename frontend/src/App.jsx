@@ -9,7 +9,52 @@ function App() {
   const [isRegister, setIsRegister] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [allUsers, setAllUsers] = useState([]);
+  const [newArt, setNewArt] = useState({ title: '', price: '', artist_id: 1, image: null });
+  const [artists, setArtists] = useState([]);
+  const [isEditing, setIsEditing] = useState(null); 
+  const [editForm, setEditForm] = useState({ title: '', price: '', artist_id: '' });
 
+
+  const handleAddArtist = async () => {
+    const name = prompt("Введите имя нового автора:");
+    if (!name) return;
+    const res = await fetch('http://127.0.0.1:8000/api/artists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (res.ok) fetchArtists();
+  };
+
+  const fetchArtists = async () => {
+    const res = await fetch('http://127.0.0.1:8000/api/artists');
+    const data = await res.json();
+    setArtists(data);
+  };
+
+  useEffect(() => {
+    fetchArtists();
+  }, []);
+
+  const handleAddArt = async (e) => {
+    e.preventDefault();
+    const formData = new FormData();
+    formData.append('title', newArt.title);
+    formData.append('price', newArt.price);
+    formData.append('artist_id', newArt.artist_id);
+    formData.append('image', newArt.image);
+
+    const res = await fetch('http://127.0.0.1:8000/api/artworks', {
+      method: 'POST',
+      body: formData 
+    });
+
+    if (res.ok) {
+      alert("Картина успешно добавлена!");
+      fetchArtworks(); 
+      setNewArt({ title: '', price: '', artist_id: 1, image: null });
+    }
+  };
 
   const fetchUsers = async () => {
     if (user?.role !== 'admin') return;
@@ -18,7 +63,6 @@ function App() {
     setAllUsers(data);
   };
 
-  // Загружаем пользователей, когда админ входит в систему
   useEffect(() => {
     if (isLoggedIn && user?.role === 'admin') {
       fetchUsers();
@@ -28,9 +72,9 @@ function App() {
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Вы уверены, что хотите исключить этого пользователя из клуба?")) return;
     const res = await fetch(`http://127.0.0.1:8000/api/users/${userId}`, { method: 'DELETE' });
-    if (res.ok) fetchUsers(); // Обновляем список
+    if (res.ok) fetchUsers();
   };
-  // Загрузка картин
+
   const fetchArtworks = async () => {
     try {
       const res = await fetch('http://127.0.0.1:8000/api/artworks');
@@ -45,7 +89,6 @@ function App() {
     fetchArtworks();
   }, []);
 
-  // Вход и Регистрация
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = isRegister ? 'register' : 'login';
@@ -74,14 +117,41 @@ function App() {
     }
   };
 
-  // Удаление картины (только для админа)
   const deleteArtwork = async (id) => {
     if (!window.confirm("Удалить этот шедевр из базы?")) return;
     try {
       const res = await fetch(`http://127.0.0.1:8000/api/artworks/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchArtworks(); // Обновляем список
+      if (res.ok) fetchArtworks();
     } catch (err) {
       alert("Ошибка при удалении");
+    }
+  };
+
+  const startEdit = (art) => {
+    setIsEditing(art.id);
+    const artist = artists.find(a => a.name === art.artist);
+    setEditForm({ 
+      title: art.title, 
+      price: art.price, 
+      artist_id: artist ? artist.id : (artists[0]?.id || '') 
+    });
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(null);
+  };
+
+  const handleUpdateArt = async (e) => {
+    e.preventDefault();
+    const res = await fetch(`http://127.0.0.1:8000/api/artworks/${isEditing}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm)
+    });
+
+    if (res.ok) {
+      setIsEditing(null);
+      fetchArtworks();
     }
   };
 
@@ -111,7 +181,6 @@ function App() {
             </p>
 
             <div className="hero-controls">
-              {/* Если НЕ вошел — кнопка регистрации, если ВОШЕЛ — кнопка в кабинет или статус */}
               {!isLoggedIn ? (
                 <button className="btn-primary" onClick={() => { setIsRegister(true); setShowLogin(true); }}>
                   Стать частью клуба
@@ -129,46 +198,109 @@ function App() {
           </div>
         </section>
 
-
-{user?.role === 'admin' && (
-  <section className="admin-panel-users">
-    <div className="container">
-      <h2 className="admin-title">Управление резидентами клуба</h2>
-      <div className="users-list">
-        {allUsers.map(u => (
-          <div key={u.id} className="user-item">
-            <div className="user-info">
-              <span className="user-id">#{u.id}</span>
-              <span className="user-name">{u.username}</span>
-              <span className={`user-role ${u.role}`}>{u.role}</span>
+        {user?.role === 'admin' && (
+          <section className="admin-panel-users">
+            <div className="container">
+              <h2 className="admin-title">Управление резидентами клуба</h2>
+              <div className="users-list">
+                {allUsers.map(u => (
+                  <div key={u.id} className="user-item">
+                    <div className="user-info">
+                      <span className="user-id">#{u.id}</span>
+                      <span className="user-name">{u.username}</span>
+                      <span className={`user-role ${u.role}`}>{u.role}</span>
+                    </div>
+                    {u.id !== user.id && (
+                      <button className="btn-delete-user" onClick={() => handleDeleteUser(u.id)}>Исключить</button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-            {u.id !== user.id && (
-              <button className="btn-delete-user" onClick={() => handleDeleteUser(u.id)}>Исключить</button>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-)}
+            <div className="admin-add-art">
+              <h3 className="admin-sub-title">Добавить новый экспонат</h3>
+              <form onSubmit={handleAddArt} className="add-art-form">
+                <input type="text" placeholder="Название картины" required
+                  value={newArt.title} onChange={e => setNewArt({...newArt, title: e.target.value})} />
+                
+                <input type="number" placeholder="Оценка (USD $)" required
+                  value={newArt.price} onChange={e => setNewArt({...newArt, price: e.target.value})} />
+                
+                <div className="artist-select-group">
+                  <select value={newArt.artist_id} onChange={e => setNewArt({...newArt, artist_id: e.target.value})}>
+                    {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                  </select>
+                  <button type="button" onClick={handleAddArtist} className="btn-add-small">+</button>
+                </div>
+
+                <input type="file" accept="image/*" required
+                  onChange={e => setNewArt({...newArt, image: e.target.files[0]})} />
+                
+                <button type="submit" className="btn-primary">Опубликовать</button>
+              </form>
+            </div>
+          </section>
+        )}
 
         <section id="catalog" className="catalog-section">
           <h2 className="section-title">Экспозиция</h2>
           <div className="art-grid">
             {artworks.map(art => (
-              <div key={art.id} className="art-card">
+              <div key={art.id} className={`art-card ${isEditing === art.id ? 'editing' : ''}`}>
                 <div className="art-image-container">
                   <img src={art.image_url} alt={art.title} className="art-image" />
                   {art.is_sold && <div className="sold-badge">Sold</div>}
-                  {/* Кнопка удаления только для админа */}
+                  
                   {user?.role === 'admin' && (
-                    <button className="delete-btn" onClick={() => deleteArtwork(art.id)}>✕</button>
+                    <>
+                      {isEditing === art.id ? (
+                        <div className="admin-card-actions editing-mode">
+                          <button className="save-btn" onClick={handleUpdateArt}>💾</button>
+                          <button className="cancel-btn" onClick={cancelEdit}>✕</button>
+                        </div>
+                      ) : (
+                        <>
+                          <button className="delete-btn" onClick={() => deleteArtwork(art.id)}>✕</button>
+                          <button className="edit-btn" onClick={() => startEdit(art)}>✎</button>
+                        </>
+                      )}
+                    </>
                   )}
                 </div>
+
                 <div className="art-info">
-                  <span className="art-artist">{art.artist}</span>
-                  <h3 className="art-title">{art.title}</h3>
-                  <p className="art-price">{art.price.toLocaleString()} ₽</p>
+                  {isEditing === art.id ? (
+                    <div className="edit-art-inline-form">
+                      <select 
+                        value={editForm.artist_id} 
+                        onChange={e => setEditForm({...editForm, artist_id: e.target.value})}
+                        className="edit-input artist-input"
+                      >
+                        {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      </select>
+                      <input 
+                        type="text" 
+                        value={editForm.title} 
+                        onChange={e => setEditForm({...editForm, title: e.target.value})}
+                        className="edit-input title-input"
+                      />
+                      <div className="price-input-wrapper">
+                        <span>$</span>
+                        <input 
+                          type="number" 
+                          value={editForm.price} 
+                          onChange={e => setEditForm({...editForm, price: e.target.value})}
+                          className="edit-input price-input"
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="art-artist">{art.artist}</span>
+                      <h3 className="art-title">{art.title}</h3>
+                      <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+from fastapi import UploadFile, File, Form
+import shutil
 
 app = FastAPI()
 
@@ -22,6 +24,81 @@ DATABASE_PATH = os.path.join(BASE_DIR, "gallery.db")
 class AuthData(BaseModel):
     username: str
     password: str
+
+# 1. Добавление нового автора
+@app.post("/api/artists")
+async def add_artist(data: dict):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("INSERT INTO artists (name) VALUES (?)", (data['name'],))
+        conn.commit()
+        return {"status": "success", "id": cursor.lastrowid}
+    finally:
+        conn.close()
+
+# 2. Получение списка всех авторов
+@app.get("/api/artists")
+async def get_artists():
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM artists")
+    artists = cursor.fetchall()
+    conn.close()
+    return [{"id": a[0], "name": a[1]} for a in artists]
+
+# 3. Редактирование картины (название, цена, автор)
+@app.put("/api/artworks/{art_id}")
+async def update_artwork(art_id: int, data: dict):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE artworks 
+            SET title = ?, price = ?, artist_id = ? 
+            WHERE id = ?
+        ''', (data['title'], data['price'], data['artist_id'], art_id))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+        
+# ДОБАВЛЕНИЕ НОВОЙ КАРТИНЫ
+@app.post("/api/artworks")
+async def add_artwork(
+    title: str = Form(...),
+    price: int = Form(...),
+    artist_id: int = Form(...),
+    image: UploadFile = File(...)
+):
+    conn = sqlite3.connect(DATABASE_PATH)
+    cursor = conn.cursor()
+    try:
+        # 1. Генерируем ID для изображения (возьмем следующий по счету)
+        cursor.execute("SELECT MAX(id) FROM artworks")
+        max_id = cursor.fetchone()[0] or 0
+        new_image_id = max_id + 1
+        
+        # 2. Сохраняем файл в папку public/img
+        file_location = os.path.join(BASE_DIR, "public", "img", f"{new_image_id}.jpg")
+        with open(file_location, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+            
+        # 3. Записываем данные в БД
+        cursor.execute('''
+            INSERT INTO artworks (title, price, artist_id, image_id, is_sold) 
+            VALUES (?, ?, ?, ?, 0)
+        ''', (title, price, artist_id, new_image_id))
+        
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        print(f"Error adding art: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка при сохранении картины")
+    finally:
+        conn.close()
 
 # ЭНДПОИНТ РЕГИСТРАЦИИ
 @app.post("/api/register")

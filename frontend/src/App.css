@@ -176,6 +176,7 @@ body {
 
 .art-card {
   cursor: pointer;
+  position: relative;
 }
 
 .art-image-container {
@@ -207,10 +208,131 @@ body {
   letter-spacing: 2px;
 }
 
+/* Стилизация кнопок удаления и редактирования в углах */
+.delete-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ff4d4d;
+  border: 1px solid rgba(255, 77, 77, 0.3);
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.edit-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--gold);
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  z-index: 10;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+}
+
+.art-card:hover .delete-btn, 
+.art-card:hover .edit-btn {
+  opacity: 1;
+}
+
+.delete-btn:hover { background: #ff4d4d; color: white; border-color: #ff4d4d; }
+.edit-btn:hover { background: var(--gold); color: black; border-color: var(--gold); }
+
+/* Кнопки при активном редактировании */
+.admin-card-actions.editing-mode {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 8px;
+  z-index: 12;
+  opacity: 1;
+}
+
+.save-btn, .cancel-btn {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  background: var(--black);
+  color: var(--gold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.3s;
+}
+
+.save-btn:hover { background: var(--gold); color: black; }
+.cancel-btn { border-color: #444; color: #888; }
+.cancel-btn:hover { background: #444; color: white; }
+
+/* Форма редактирования в инфо-блоке */
 .art-info {
   margin-top: 25px;
 }
 
+.edit-art-inline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.4s ease;
+}
+
+.edit-input {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: white;
+  padding: 8px 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.edit-input:focus { border-color: var(--gold); }
+
+.edit-input.title-input {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+}
+
+.price-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  padding-left: 10px;
+}
+
+.price-input-wrapper span { color: var(--gold); font-size: 14px; }
+.price-input-wrapper .edit-input { border: none; width: 100%; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Остальные стили без изменений */
 .art-artist {
   font-size: 11px;
   text-transform: uppercase;
@@ -264,42 +386,6 @@ body {
   background: none; border: none; color: white; cursor: pointer;
 }
 .w-full { width: 100%; }
-
-.admin-panel {
-  padding: 50px 10%;
-  background: #111;
-  border-bottom: 1px solid var(--gold);
-  margin-bottom: 50px;
-}
-
-.delete-btn {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: rgba(255, 0, 0, 0.6);
-  color: white;
-  border: none;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  z-index: 10;
-  border-radius: 50%;
-  opacity: 0;
-  transition: 0.3s;
-}
-
-.art-card:hover .delete-btn {
-  opacity: 1;
-}
-
-.auth-toggle-text {
-  margin-top: 20px;
-  font-size: 12px;
-  color: var(--text-muted);
-  text-align: center;
-  cursor: pointer;
-}
-.auth-toggle-text span { color: var(--gold); text-decoration: underline; }
 
 .admin-panel-users {
   padding: 60px 5%;
@@ -358,3 +444,55 @@ body {
   background: #ff4d4d;
   color: white;
 }
+
+.admin-add-art {
+  margin-top: 40px;
+  padding: 30px;
+  border: 1px dashed var(--gold);
+}
+
+.add-art-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  align-items: end;
+}
+
+.add-art-form input, .add-art-form select {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: white;
+  padding: 10px;
+  outline: none;
+}
+
+.add-art-form input:focus { border-color: var(--gold); }
+
+.admin-sub-title {
+  font-family: 'Playfair Display', serif;
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+}
+
+.artist-select-group {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-add-small {
+  background: var(--gold);
+  border: none;
+  width: 40px;
+  cursor: pointer;
+  color: black;
+  font-weight: bold;
+}
+
+.auth-toggle-text {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+  cursor: pointer;
+}
+.auth-toggle-text span { color: var(--gold); text-decoration: underline; }
