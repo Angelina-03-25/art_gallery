@@ -22,7 +22,7 @@ def update_catalog():
     
     conn.commit()
     conn.close()
-    print("✅ Цены успешно обновлены. Валюта: USD.")
+    print("Цены успешно обновлены. Валюта: USD.")
 
 if __name__ == "__main__":
     update_catalog()

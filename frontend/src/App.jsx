@@ -9,11 +9,45 @@ function App() {
   const [isRegister, setIsRegister] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [allUsers, setAllUsers] = useState([]);
-  const [newArt, setNewArt] = useState({ title: '', price: '', artist_id: 1, image: null });
+  // Добавлено collection_id в newArt
+  const [newArt, setNewArt] = useState({ title: '', price: '', artist_id: 1, collection_id: '', image: null });
   const [artists, setArtists] = useState([]);
   const [isEditing, setIsEditing] = useState(null); 
-  const [editForm, setEditForm] = useState({ title: '', price: '', artist_id: '' });
+  // Добавлено collection_id в editForm
+  const [editForm, setEditForm] = useState({ title: '', price: '', artist_id: '', collection_id: '' });
+  const [collections, setCollections] = useState([]);
+  const [newCollection, setNewCollection] = useState({ name: '', description: '' });
+  const [isEditingCol, setIsEditingCol] = useState(null); 
 
+
+  const fetchCollections = async () => {
+    const res = await fetch('http://127.0.0.1:8000/api/collections');
+    const data = await res.json();
+    setCollections(data);
+  };
+
+  useEffect(() => {
+    fetchCollections();
+  }, []);
+
+  const handleAddCollection = async (e) => {
+    e.preventDefault();
+    const res = await fetch('http://127.0.0.1:8000/api/collections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newCollection)
+    });
+    if (res.ok) {
+      setNewCollection({ name: '', description: '' });
+      fetchCollections();
+    }
+  };
+
+  const deleteCollection = async (id) => {
+    if (!window.confirm("Удалить коллекцию? Картины останутся в общем каталоге.")) return;
+    await fetch(`http://127.0.0.1:8000/api/collections/${id}`, { method: 'DELETE' });
+    fetchCollections();
+  };
 
   const handleAddArtist = async () => {
     const name = prompt("Введите имя нового автора:");
@@ -42,6 +76,9 @@ function App() {
     formData.append('title', newArt.title);
     formData.append('price', newArt.price);
     formData.append('artist_id', newArt.artist_id);
+    if (newArt.collection_id) {
+        formData.append('collection_id', newArt.collection_id);
+      }
     formData.append('image', newArt.image);
 
     const res = await fetch('http://127.0.0.1:8000/api/artworks', {
@@ -52,7 +89,7 @@ function App() {
     if (res.ok) {
       alert("Картина успешно добавлена!");
       fetchArtworks(); 
-      setNewArt({ title: '', price: '', artist_id: 1, image: null });
+      setNewArt({ title: '', price: '', artist_id: '', collection_id: '', image: null });
     }
   };
 
@@ -133,7 +170,8 @@ function App() {
     setEditForm({ 
       title: art.title, 
       price: art.price, 
-      artist_id: artist ? artist.id : (artists[0]?.id || '') 
+      artist_id: artist ? artist.id : (artists[0]?.id || ''),
+      collection_id: art.collection_id || '' // Подгружаем ID коллекции при старте правки
     });
   };
 
@@ -146,7 +184,12 @@ function App() {
     const res = await fetch(`http://127.0.0.1:8000/api/artworks/${isEditing}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editForm)
+      body: JSON.stringify({
+            title: editForm.title,
+            price: Number(editForm.price),
+            artist_id: Number(editForm.artist_id),
+            collection_id: editForm.collection_id ? Number(editForm.collection_id) : null
+          })
     });
 
     if (res.ok) {
@@ -217,6 +260,27 @@ function App() {
                 ))}
               </div>
             </div>
+
+
+            <div className="admin-collections-manager">
+              <h3 className="admin-sub-title">Управление коллекциями</h3>
+              <form onSubmit={handleAddCollection} className="add-col-form">
+                <input type="text" placeholder="Название коллекции" value={newCollection.name}
+                  onChange={e => setNewCollection({...newCollection, name: e.target.value})} required />
+                <button type="submit" className="btn-primary">Создать</button>
+              </form>
+
+              <div className="collections-list-admin">
+                {collections.map(col => (
+                  <div key={col.id} className="col-admin-item">
+                    <span>{col.name}</span>
+                    <div className="col-actions">
+                      <button onClick={() => deleteCollection(col.id)}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
             <div className="admin-add-art">
               <h3 className="admin-sub-title">Добавить новый экспонат</h3>
               <form onSubmit={handleAddArt} className="add-art-form">
@@ -232,6 +296,16 @@ function App() {
                   </select>
                   <button type="button" onClick={handleAddArtist} className="btn-add-small">+</button>
                 </div>
+
+                {/* Выбор коллекции при добавлении */}
+                <select 
+                  value={newArt.collection_id} 
+                  onChange={e => setNewArt({...newArt, collection_id: e.target.value})}
+                  className="edit-input"
+                >
+                  <option value="">Без коллекции</option>
+                  {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
 
                 <input type="file" accept="image/*" required
                   onChange={e => setNewArt({...newArt, image: e.target.files[0]})} />
@@ -278,6 +352,17 @@ function App() {
                       >
                         {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                       </select>
+
+                      {/* Выбор коллекции при редактировании */}
+                      <select 
+                        value={editForm.collection_id || ''} 
+                        onChange={e => setEditForm({...editForm, collection_id: e.target.value})}
+                        className="edit-input"
+                      >
+                        <option value="">Без коллекции</option>
+                        {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+
                       <input 
                         type="text" 
                         value={editForm.title} 

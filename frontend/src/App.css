@@ -496,3 +496,132 @@ body {
   cursor: pointer;
 }
 .auth-toggle-text span { color: var(--gold); text-decoration: underline; }
+
+.admin-collections-manager {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: #0a0a0a;
+  border-left: 3px solid var(--gold);
+}
+
+.add-col-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.collections-list-admin {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.col-admin-item {
+  background: #1a1a1a;
+  padding: 8px 15px;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.col-admin-item button {
+  background: none;
+  border: none;
+  color: #ff4d4d;
+  cursor: pointer;
+}
+
+/* Секция коллекций на главной */
+.collections-section {
+  padding: 100px 5%;
+}
+
+.collection-multi-select p {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 4px 12px;
+  border: 1px solid #333;
+  cursor: pointer;
+  transition: 0.3s;
+  color: var(--text-muted);
+}
+
+.tag.active {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(197, 160, 89, 0.1);
+}
+
+.tag:hover {
+  border-color: var(--gold);
+}
+
+.admin-block {
+  background: #0f0f0f;
+  padding: 25px;
+  border-bottom: 1px solid #222;
+  margin-bottom: 20px;
+}
+
+.tags-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 20px 0;
+}
+
+.collection-tag {
+  padding: 6px 14px;
+  border: 1px solid #444;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #888;
+}
+
+.collection-tag.active {
+  background: var(--gold);
+  color: black;
+  border-color: var(--gold);
+}
+
+.admin-report-table {
+  margin: 20px 0;
+  overflow-x: auto;
+}
+
+.admin-report-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-report-table th, td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #222;
+}
+
+.label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
