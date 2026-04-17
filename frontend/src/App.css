@@ -573,55 +573,39 @@ body {
   border-color: var(--gold);
 }
 
-.admin-block {
-  background: #0f0f0f;
-  padding: 25px;
-  border-bottom: 1px solid #222;
-  margin-bottom: 20px;
+.simple-text-list {
+  background: #111; /* Глубокий черный фон */
+  padding: 20px;
+  border-radius: 4px;
+  border: 1px solid #222;
+  margin-top: 15px;
 }
 
-.tags-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 10px 0 20px 0;
+.text-list-item {
+  color: #ccc; /* Спокойный серый цвет текста */
+  font-size: 14px; /* Единый размер */
+  font-family: 'Inter', sans-serif; /* Тот же шрифт, что и везде */
+  line-height: 1.8; /* Расстояние между строками для читаемости */
+  border-bottom: 1px solid #1a1a1a;
+  padding: 5px 0;
 }
 
-.collection-tag {
-  padding: 6px 14px;
+.text-list-item:last-child {
+  border-bottom: none;
+}
+
+/* Кнопка в стиле сайта */
+.btn-primary {
+  background: none;
   border: 1px solid #444;
-  font-size: 12px;
+  color: #fff;
+  padding: 8px 16px;
   cursor: pointer;
-  transition: all 0.2s;
-  color: #888;
+  transition: 0.3s;
 }
 
-.collection-tag.active {
-  background: var(--gold);
-  color: black;
-  border-color: var(--gold);
-}
-
-.admin-report-table {
-  margin: 20px 0;
-  overflow-x: auto;
-}
-
-.admin-report-table table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.admin-report-table th, td {
-  padding: 12px;
-  text-align: left;
-  border-bottom: 1px solid #222;
-}
-
-.label {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--gold);
-  letter-spacing: 1px;
+.btn-primary:hover {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
 }

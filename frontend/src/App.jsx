@@ -18,7 +18,23 @@ function App() {
   const [collections, setCollections] = useState([]);
   const [newCollection, setNewCollection] = useState({ name: '', description: '' });
   const [isEditingCol, setIsEditingCol] = useState(null); 
-
+  const [rawList, setRawList] = useState('');
+  const [viewMode, setViewMode] = useState('grid');
+  const [showArtList, setShowArtList] = useState(false);
+  // Функция для формирования красивого текстового списка
+  const generateArtList = () => {
+    if (artworks.length === 0) return "Список пуст";
+    
+    const list = artworks.map((art, index) => {
+      // Находим название коллекции по ID, если оно есть
+      const col = collections.find(c => c.id === art.collection_id);
+      const colName = col ? `[Коллекция: ${col.name}]` : '[Без коллекции]';
+      
+      return `${index + 1}. ${art.title} — ${art.artist}. Цена: $${art.price.toLocaleString()} ${colName}`;
+    }).join('\n');
+    
+    setRawList(list);
+  };
 
   const fetchCollections = async () => {
     const res = await fetch('http://127.0.0.1:8000/api/collections');
@@ -261,6 +277,24 @@ function App() {
               </div>
             </div>
 
+            <div className="admin-reports-section">
+              <h2>Отчеты и списки</h2>
+              <button className="btn-secondary" onClick={generateArtList}>
+                Сформировать текстовый список всех картин
+              </button>
+
+              {rawList && (
+                <div className="list-output-container">
+                  <textarea 
+                    readOnly 
+                    value={rawList} 
+                    rows="15" 
+                    style={{ width: '100%', marginTop: '10px', fontFamily: 'monospace', padding: '10px' }}
+                  />
+                  <button onClick={() => setRawList('')}>Закрыть список</button>
+                </div>
+              )}
+            </div>
 
             <div className="admin-collections-manager">
               <h3 className="admin-sub-title">Управление коллекциями</h3>
