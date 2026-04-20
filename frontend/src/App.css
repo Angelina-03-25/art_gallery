@@ -609,3 +609,79 @@ body {
   background: #fff;
   color: #000;
 }
+
+.nav-link {
+  cursor: pointer;
+  color: #888;
+  transition: 0.3s;
+  text-decoration: none;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #ffd700; /* Золотой цвет как в твоем стиле */
+}
+
+.collections-page {
+  padding: 100px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.collections-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+  margin-top: 50px;
+}
+
+.collection-view-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 4px;
+  transition: 0.4s;
+}
+
+.collection-view-card:hover {
+  border-color: #ffd700;
+  transform: translateY(-5px);
+}
+
+.col-preview-images {
+  display: flex;
+  gap: 10px;
+  height: 120px;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.col-mini-img {
+  width: 30%;
+  object-fit: cover;
+  border-radius: 2px;
+  filter: grayscale(1);
+  transition: 0.5s;
+}
+
+.collection-view-card:hover .col-mini-img {
+  filter: grayscale(0);
+}
+
+.col-view-info h3 {
+  font-size: 1.5rem;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.col-view-info p {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.col-count {
+  color: #ffd700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}

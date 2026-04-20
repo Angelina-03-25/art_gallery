@@ -19,8 +19,7 @@ function App() {
   const [newCollection, setNewCollection] = useState({ name: '', description: '' });
   const [isEditingCol, setIsEditingCol] = useState(null); 
   const [rawList, setRawList] = useState('');
-  const [viewMode, setViewMode] = useState('grid');
-  const [showArtList, setShowArtList] = useState(false);
+  const [currentPage, setCurrentPage] = useState('home');
   // Функция для формирования красивого текстового списка
   const generateArtList = () => {
     if (artworks.length === 0) return "Список пуст";
@@ -222,210 +221,244 @@ function App() {
           {isLoggedIn ? 'Logout' : 'Login'}
         </div>
         <div className="nav-links">
-          <a href="#catalog">Каталог</a>
-          <a href="#collections">Коллекции</a>
+          <div className={`nav-link ${currentPage === 'home' ? 'active' : ''}`} 
+              onClick={() => setCurrentPage('home')}>Каталог</div>
+          <div className={`nav-link ${currentPage === 'collections' ? 'active' : ''}`} 
+              onClick={() => setCurrentPage('collections')}>Коллекции</div>
           <a href="#authors">Авторы</a>
         </div>
       </nav>
 
       <main className="main-content">
-        <section className="hero">
-          <div className="hero-text">
-            <h1 className="hero-title">Искусство вне времени<br /><span>эксклюзивно.</span></h1>
-            
-            <p className="hero-description">
-              {isLoggedIn 
-                ? `Добро пожаловать, ${user?.username}. Вам открыт полный доступ к архивам закрытого клуба.` 
-                : 'Присоединяйтесь к сообществу коллекционеров, чтобы получить доступ к редким полотнам.'}
-            </p>
-
-            <div className="hero-controls">
-              {!isLoggedIn ? (
-                <button className="btn-primary" onClick={() => { setIsRegister(true); setShowLogin(true); }}>
-                  Стать частью клуба
-                </button>
-              ) : (
-                <button className="btn-primary" onClick={() => document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})}>
-                  Моя коллекция
-                </button>
-              )}
-              
-              <button className="btn-secondary" onClick={() => document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})}>
-                Смотреть каталог
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {user?.role === 'admin' && (
-          <section className="admin-panel-users">
-            <div className="container">
-              <h2 className="admin-title">Управление резидентами клуба</h2>
-              <div className="users-list">
-                {allUsers.map(u => (
-                  <div key={u.id} className="user-item">
-                    <div className="user-info">
-                      <span className="user-id">#{u.id}</span>
-                      <span className="user-name">{u.username}</span>
-                      <span className={`user-role ${u.role}`}>{u.role}</span>
-                    </div>
-                    {u.id !== user.id && (
-                      <button className="btn-delete-user" onClick={() => handleDeleteUser(u.id)}>Исключить</button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="admin-reports-section">
-              <h2>Отчеты и списки</h2>
-              <button className="btn-secondary" onClick={generateArtList}>
-                Сформировать текстовый список всех картин
-              </button>
-
-              {rawList && (
-                <div className="list-output-container">
-                  <textarea 
-                    readOnly 
-                    value={rawList} 
-                    rows="15" 
-                    style={{ width: '100%', marginTop: '10px', fontFamily: 'monospace', padding: '10px' }}
-                  />
-                  <button onClick={() => setRawList('')}>Закрыть список</button>
-                </div>
-              )}
-            </div>
-
-            <div className="admin-collections-manager">
-              <h3 className="admin-sub-title">Управление коллекциями</h3>
-              <form onSubmit={handleAddCollection} className="add-col-form">
-                <input type="text" placeholder="Название коллекции" value={newCollection.name}
-                  onChange={e => setNewCollection({...newCollection, name: e.target.value})} required />
-                <button type="submit" className="btn-primary">Создать</button>
-              </form>
-
-              <div className="collections-list-admin">
-                {collections.map(col => (
-                  <div key={col.id} className="col-admin-item">
-                    <span>{col.name}</span>
-                    <div className="col-actions">
-                      <button onClick={() => deleteCollection(col.id)}>✕</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="admin-add-art">
-              <h3 className="admin-sub-title">Добавить новый экспонат</h3>
-              <form onSubmit={handleAddArt} className="add-art-form">
-                <input type="text" placeholder="Название картины" required
-                  value={newArt.title} onChange={e => setNewArt({...newArt, title: e.target.value})} />
+        {currentPage === 'home' ? (
+          <>
+            {/* СЕКЦИЯ HERO */}
+            <section className="hero">
+              <div className="hero-text">
+                <h1 className="hero-title">Искусство вне времени<br /><span>эксклюзивно.</span></h1>
                 
-                <input type="number" placeholder="Оценка (USD $)" required
-                  value={newArt.price} onChange={e => setNewArt({...newArt, price: e.target.value})} />
-                
-                <div className="artist-select-group">
-                  <select value={newArt.artist_id} onChange={e => setNewArt({...newArt, artist_id: e.target.value})}>
-                    {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
-                  <button type="button" onClick={handleAddArtist} className="btn-add-small">+</button>
-                </div>
+                <p className="hero-description">
+                  {isLoggedIn 
+                    ? `Добро пожаловать, ${user?.username}. Вам открыт полный доступ к архивам закрытого клуба.` 
+                    : 'Присоединяйтесь к сообществу коллекционеров, чтобы получить доступ к редким полотнам.'}
+                </p>
 
-                {/* Выбор коллекции при добавлении */}
-                <select 
-                  value={newArt.collection_id} 
-                  onChange={e => setNewArt({...newArt, collection_id: e.target.value})}
-                  className="edit-input"
-                >
-                  <option value="">Без коллекции</option>
-                  {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-
-                <input type="file" accept="image/*" required
-                  onChange={e => setNewArt({...newArt, image: e.target.files[0]})} />
-                
-                <button type="submit" className="btn-primary">Опубликовать</button>
-              </form>
-            </div>
-          </section>
-        )}
-
-        <section id="catalog" className="catalog-section">
-          <h2 className="section-title">Экспозиция</h2>
-          <div className="art-grid">
-            {artworks.map(art => (
-              <div key={art.id} className={`art-card ${isEditing === art.id ? 'editing' : ''}`}>
-                <div className="art-image-container">
-                  <img src={art.image_url} alt={art.title} className="art-image" />
-                  {art.is_sold && <div className="sold-badge">Sold</div>}
+                <div className="hero-controls">
+                  {!isLoggedIn ? (
+                    <button className="btn-primary" onClick={() => { setIsRegister(true); setShowLogin(true); }}>
+                      Стать частью клуба
+                    </button>
+                  ) : (
+                    <button className="btn-primary" onClick={() => document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})}>
+                      Моя коллекция
+                    </button>
+                  )}
                   
-                  {user?.role === 'admin' && (
-                    <>
+                  <button className="btn-secondary" onClick={() => document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})}>
+                    Смотреть каталог
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* АДМИН-ПАНЕЛЬ (показывается только админу) */}
+            {user?.role === 'admin' && (
+              <section className="admin-panel-users">
+                <div className="container">
+                  <h2 className="admin-title">Управление резидентами клуба</h2>
+                  <div className="users-list">
+                    {allUsers.map(u => (
+                      <div key={u.id} className="user-item">
+                        <div className="user-info">
+                          <span className="user-id">#{u.id}</span>
+                          <span className="user-name">{u.username}</span>
+                          <span className={`user-role ${u.role}`}>{u.role}</span>
+                        </div>
+                        {u.id !== user.id && (
+                          <button className="btn-delete-user" onClick={() => handleDeleteUser(u.id)}>Исключить</button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="admin-reports-section">
+                  <h2>Отчеты и списки</h2>
+                  <button className="btn-secondary" onClick={generateArtList}>
+                    Сформировать текстовый список всех картин
+                  </button>
+
+                  {rawList && (
+                    <div className="list-output-container">
+                      <textarea 
+                        readOnly 
+                        value={rawList} 
+                        rows="15" 
+                        style={{ width: '100%', marginTop: '10px', backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #333', fontFamily: 'monospace', padding: '10px' }}
+                      />
+                      <button className="btn-secondary" style={{marginTop: '10px'}} onClick={() => setRawList('')}>Закрыть список</button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-collections-manager">
+                  <h3 className="admin-sub-title">Управление коллекциями</h3>
+                  <form onSubmit={handleAddCollection} className="add-col-form">
+                    <input type="text" placeholder="Название коллекции" value={newCollection.name}
+                      onChange={e => setNewCollection({...newCollection, name: e.target.value})} required />
+                    <button type="submit" className="btn-primary">Создать</button>
+                  </form>
+
+                  <div className="collections-list-admin">
+                    {collections.map(col => (
+                      <div key={col.id} className="col-admin-item">
+                        <span>{col.name}</span>
+                        <div className="col-actions">
+                          <button onClick={() => deleteCollection(col.id)}>✕</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="admin-add-art">
+                  <h3 className="admin-sub-title">Добавить новый экспонат</h3>
+                  <form onSubmit={handleAddArt} className="add-art-form">
+                    <input type="text" placeholder="Название картины" required
+                      value={newArt.title} onChange={e => setNewArt({...newArt, title: e.target.value})} />
+                    
+                    <input type="number" placeholder="Оценка (USD $)" required
+                      value={newArt.price} onChange={e => setNewArt({...newArt, price: e.target.value})} />
+                    
+                    <div className="artist-select-group">
+                      <select value={newArt.artist_id} onChange={e => setNewArt({...newArt, artist_id: e.target.value})}>
+                        {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      </select>
+                      <button type="button" onClick={handleAddArtist} className="btn-add-small">+</button>
+                    </div>
+
+                    <select 
+                      value={newArt.collection_id} 
+                      onChange={e => setNewArt({...newArt, collection_id: e.target.value})}
+                      className="edit-input"
+                    >
+                      <option value="">Без коллекции</option>
+                      {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+
+                    <input type="file" accept="image/*" required
+                      onChange={e => setNewArt({...newArt, image: e.target.files[0]})} />
+                    
+                    <button type="submit" className="btn-primary">Опубликовать</button>
+                  </form>
+                </div>
+              </section>
+            )}
+
+            {/* СЕКЦИЯ КАТАЛОГ */}
+            <section id="catalog" className="catalog-section">
+              <h2 className="section-title">Экспозиция</h2>
+              <div className="art-grid">
+                {artworks.map(art => (
+                  <div key={art.id} className={`art-card ${isEditing === art.id ? 'editing' : ''}`}>
+                    <div className="art-image-container">
+                      <img src={art.image_url} alt={art.title} className="art-image" />
+                      {art.is_sold && <div className="sold-badge">Sold</div>}
+                      
+                      {user?.role === 'admin' && (
+                        <>
+                          {isEditing === art.id ? (
+                            <div className="admin-card-actions editing-mode">
+                              <button className="save-btn" onClick={handleUpdateArt}>💾</button>
+                              <button className="cancel-btn" onClick={cancelEdit}>✕</button>
+                            </div>
+                          ) : (
+                            <>
+                              <button className="delete-btn" onClick={() => deleteArtwork(art.id)}>✕</button>
+                              <button className="edit-btn" onClick={() => startEdit(art)}>✎</button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <div className="art-info">
                       {isEditing === art.id ? (
-                        <div className="admin-card-actions editing-mode">
-                          <button className="save-btn" onClick={handleUpdateArt}>💾</button>
-                          <button className="cancel-btn" onClick={cancelEdit}>✕</button>
+                        <div className="edit-art-inline-form">
+                          <select 
+                            value={editForm.artist_id} 
+                            onChange={e => setEditForm({...editForm, artist_id: e.target.value})}
+                            className="edit-input artist-input"
+                          >
+                            {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                          </select>
+
+                          <select 
+                            value={editForm.collection_id || ''} 
+                            onChange={e => setEditForm({...editForm, collection_id: e.target.value})}
+                            className="edit-input"
+                          >
+                            <option value="">Без коллекции</option>
+                            {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+
+                          <input 
+                            type="text" 
+                            value={editForm.title} 
+                            onChange={e => setEditForm({...editForm, title: e.target.value})}
+                            className="edit-input title-input"
+                          />
+                          <div className="price-input-wrapper">
+                            <span>$</span>
+                            <input 
+                              type="number" 
+                              value={editForm.price} 
+                              onChange={e => setEditForm({...editForm, price: e.target.value})}
+                              className="edit-input price-input"
+                            />
+                          </div>
                         </div>
                       ) : (
                         <>
-                          <button className="delete-btn" onClick={() => deleteArtwork(art.id)}>✕</button>
-                          <button className="edit-btn" onClick={() => startEdit(art)}>✎</button>
+                          <span className="art-artist">{art.artist}</span>
+                          <h3 className="art-title">{art.title}</h3>
+                          <p className="art-price">${art.price.toLocaleString('en-US')}</p>
                         </>
                       )}
-                    </>
-                  )}
-                </div>
-
-                <div className="art-info">
-                  {isEditing === art.id ? (
-                    <div className="edit-art-inline-form">
-                      <select 
-                        value={editForm.artist_id} 
-                        onChange={e => setEditForm({...editForm, artist_id: e.target.value})}
-                        className="edit-input artist-input"
-                      >
-                        {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                      </select>
-
-                      {/* Выбор коллекции при редактировании */}
-                      <select 
-                        value={editForm.collection_id || ''} 
-                        onChange={e => setEditForm({...editForm, collection_id: e.target.value})}
-                        className="edit-input"
-                      >
-                        <option value="">Без коллекции</option>
-                        {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-
-                      <input 
-                        type="text" 
-                        value={editForm.title} 
-                        onChange={e => setEditForm({...editForm, title: e.target.value})}
-                        className="edit-input title-input"
-                      />
-                      <div className="price-input-wrapper">
-                        <span>$</span>
-                        <input 
-                          type="number" 
-                          value={editForm.price} 
-                          onChange={e => setEditForm({...editForm, price: e.target.value})}
-                          className="edit-input price-input"
-                        />
-                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <span className="art-artist">{art.artist}</span>
-                      <h3 className="art-title">{art.title}</h3>
-                      <p className="art-price">${art.price.toLocaleString('en-US')}</p>
-                    </>
-                  )}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          </>
+        ) : (
+          /* СТРАНИЦА КОЛЛЕКЦИЙ */
+          <section className="collections-page">
+            <h2 className="section-title">Наши Коллекции</h2>
+            <div className="collections-container">
+              {collections.map(col => {
+                const colArts = artworks.filter(a => a.collection_id === col.id);
+                return (
+                  <div key={col.id} className="collection-view-card">
+                    <div className="col-preview-images">
+                      {colArts.slice(0, 3).map(a => (
+                        <img key={a.id} src={a.image_url} alt="" className="col-mini-img" />
+                      ))}
+                      {colArts.length === 0 && <div className="col-empty">Пустая коллекция</div>}
+                    </div>
+                    <div className="col-view-info">
+                      <h3>{col.name}</h3>
+                      <p>{col.description || "Уникальное собрание шедевров."}</p>
+                      <span className="col-count">Экспонатов: {colArts.length}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
+
 
       {showLogin && (
         <div className="modal-overlay" onClick={() => setShowLogin(false)}>
