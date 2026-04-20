@@ -20,6 +20,9 @@ function App() {
   const [isEditingCol, setIsEditingCol] = useState(null); 
   const [rawList, setRawList] = useState('');
   const [currentPage, setCurrentPage] = useState('home');
+  const [selectedCollection, setSelectedCollection] = useState(null);
+  const [selectedArt, setSelectedArt] = useState(null);
+  const closeLightbox = () => setSelectedArt(null);
   // Функция для формирования красивого текстового списка
   const generateArtList = () => {
     if (artworks.length === 0) return "Список пуст";
@@ -361,7 +364,7 @@ function App() {
               <div className="art-grid">
                 {artworks.map(art => (
                   <div key={art.id} className={`art-card ${isEditing === art.id ? 'editing' : ''}`}>
-                    <div className="art-image-container">
+                    <div className="art-image-container" onClick={() => !isEditing && setSelectedArt(art)}>
                       <img src={art.image_url} alt={art.title} className="art-image" />
                       {art.is_sold && <div className="sold-badge">Sold</div>}
                       
@@ -434,27 +437,62 @@ function App() {
         ) : (
           /* СТРАНИЦА КОЛЛЕКЦИЙ */
           <section className="collections-page">
-            <h2 className="section-title">Наши Коллекции</h2>
-            <div className="collections-container">
-              {collections.map(col => {
-                const colArts = artworks.filter(a => a.collection_id === col.id);
-                return (
-                  <div key={col.id} className="collection-view-card">
-                    <div className="col-preview-images">
-                      {colArts.slice(0, 3).map(a => (
-                        <img key={a.id} src={a.image_url} alt="" className="col-mini-img" />
-                      ))}
-                      {colArts.length === 0 && <div className="col-empty">Пустая коллекция</div>}
-                    </div>
-                    <div className="col-view-info">
-                      <h3>{col.name}</h3>
-                      <p>{col.description || "Уникальное собрание шедевров."}</p>
-                      <span className="col-count">Экспонатов: {colArts.length}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            {selectedCollection ? (
+              <>
+                <div className="collection-header-nav">
+                  <button className="btn-back" onClick={() => setSelectedCollection(null)}>← Назад к коллекциям</button>
+                  <h2 className="section-title">{selectedCollection.name}</h2>
+                  <p className="collection-desc-full">{selectedCollection.description}</p>
+                </div>
+                
+                <div className="art-grid">
+                  {artworks
+                    .filter(art => art.collection_id === selectedCollection.id)
+                    .map(art => (
+                      <div 
+                        key={art.id} 
+                        className="art-card" 
+                        /* ДОБАВЛЯЕМ КЛИК ДЛЯ ПРОСМОТРА */
+                        onClick={() => setSelectedArt(art)} 
+                        style={{ cursor: 'zoom-in' }}
+                      >
+                        <div className="art-image-container">
+                          <img src={art.image_url} alt={art.title} className="art-image" />
+                        </div>
+                        <div className="art-info">
+                          <span className="art-artist">{art.artist}</span>
+                          <h3 className="art-title">{art.title}</h3>
+                          <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="section-title">Наши Коллекции</h2>
+                <div className="collections-container">
+                  {collections.map(col => {
+                    const colArts = artworks.filter(a => a.collection_id === col.id);
+                    return (
+                      <div key={col.id} className="collection-view-card" onClick={() => setSelectedCollection(col)}>
+                        <div className="col-preview-images">
+                          {colArts.slice(0, 3).map(a => (
+                            <img key={a.id} src={a.image_url} alt="" className="col-mini-img" />
+                          ))}
+                          {colArts.length === 0 && <div className="col-empty">Пустая коллекция</div>}
+                        </div>
+                        <div className="col-view-info">
+                          <h3>{col.name}</h3>
+                          <p>{col.description || "Уникальное собрание шедевров."}</p>
+                          <span className="col-count">Экспонатов: {colArts.length}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </section>
         )}
       </main>
@@ -477,6 +515,24 @@ function App() {
             <p className="auth-toggle-text" onClick={() => setIsRegister(!isRegister)}>
               {isRegister ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Стать частью клуба'}
             </p>
+          </div>
+        </div>
+      )}
+
+      {selectedArt && (
+        <div className="lightbox-overlay" onClick={closeLightbox}>
+          <div className="lightbox-content" onClick={e => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={closeLightbox}>✕</button>
+            
+            <div className="lightbox-image-wrapper">
+              <img src={selectedArt.image_url} alt={selectedArt.title} className="lightbox-full-img" />
+            </div>
+
+            <div className="lightbox-details">
+              <h2 className="lightbox-title">{selectedArt.title}</h2>
+              <p className="lightbox-artist">{selectedArt.artist}</p>
+              <p className="lightbox-price">${selectedArt.price.toLocaleString('en-US')}</p>
+            </div>
           </div>
         </div>
       )}
