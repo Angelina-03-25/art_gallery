@@ -831,3 +831,75 @@ body {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Стили для страницы авторов списком */
+.authors-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 800px;
+  margin: 50px auto 0;
+}
+
+.author-list-item {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 80px; /* Фиксированная высота для всех */
+}
+
+.author-list-item:hover {
+  background: rgba(255, 215, 0, 0.05);
+  border-color: #ffd700;
+  transform: translateX(10px);
+}
+
+.author-list-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.author-list-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  color: #fff;
+}
+
+.author-list-count {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.author-list-arrow {
+  color: #ffd700;
+  font-size: 1.5rem;
+  opacity: 0.5;
+  transition: 0.3s;
+}
+
+.author-list-item:hover .author-list-arrow {
+  opacity: 1;
+}
+
+/* Навигация внутри страницы автора */
+.author-header-nav {
+  margin-bottom: 40px;
+}
+
+.clickable-artist {
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.clickable-artist:hover {
+  color: #ffd700; /* Золотой цвет при наведении */
+  text-decoration: underline;
+}

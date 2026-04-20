@@ -23,6 +23,9 @@ function App() {
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [selectedArt, setSelectedArt] = useState(null);
   const closeLightbox = () => setSelectedArt(null);
+  const [selectedArtist, setSelectedArtist] = useState(null);
+
+
   // Функция для формирования красивого текстового списка
   const generateArtList = () => {
     if (artworks.length === 0) return "Список пуст";
@@ -228,7 +231,8 @@ function App() {
               onClick={() => setCurrentPage('home')}>Каталог</div>
           <div className={`nav-link ${currentPage === 'collections' ? 'active' : ''}`} 
               onClick={() => setCurrentPage('collections')}>Коллекции</div>
-          <a href="#authors">Авторы</a>
+          <div className={`nav-link ${currentPage === 'authors' ? 'active' : ''}`} 
+              onClick={() => { setCurrentPage('authors'); setSelectedArtist(null); }}>Авторы</div>
         </div>
       </nav>
 
@@ -284,81 +288,53 @@ function App() {
                     ))}
                   </div>
                 </div>
-
                 <div className="admin-reports-section">
                   <h2>Отчеты и списки</h2>
-                  <button className="btn-secondary" onClick={generateArtList}>
-                    Сформировать текстовый список всех картин
-                  </button>
-
+                  <button className="btn-secondary" onClick={generateArtList}>Сформировать текстовый список всех картин</button>
                   {rawList && (
                     <div className="list-output-container">
-                      <textarea 
-                        readOnly 
-                        value={rawList} 
-                        rows="15" 
-                        style={{ width: '100%', marginTop: '10px', backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #333', fontFamily: 'monospace', padding: '10px' }}
-                      />
+                      <textarea readOnly value={rawList} rows="15" style={{ width: '100%', marginTop: '10px', backgroundColor: '#1a1a1a', color: '#fff', border: '1px solid #333', fontFamily: 'monospace', padding: '10px' }} />
                       <button className="btn-secondary" style={{marginTop: '10px'}} onClick={() => setRawList('')}>Закрыть список</button>
                     </div>
                   )}
                 </div>
-
                 <div className="admin-collections-manager">
                   <h3 className="admin-sub-title">Управление коллекциями</h3>
                   <form onSubmit={handleAddCollection} className="add-col-form">
-                    <input type="text" placeholder="Название коллекции" value={newCollection.name}
-                      onChange={e => setNewCollection({...newCollection, name: e.target.value})} required />
+                    <input type="text" placeholder="Название коллекции" value={newCollection.name} onChange={e => setNewCollection({...newCollection, name: e.target.value})} required />
                     <button type="submit" className="btn-primary">Создать</button>
                   </form>
-
                   <div className="collections-list-admin">
                     {collections.map(col => (
                       <div key={col.id} className="col-admin-item">
                         <span>{col.name}</span>
-                        <div className="col-actions">
-                          <button onClick={() => deleteCollection(col.id)}>✕</button>
-                        </div>
+                        <div className="col-actions"><button onClick={() => deleteCollection(col.id)}>✕</button></div>
                       </div>
                     ))}
                   </div>
                 </div>
-
                 <div className="admin-add-art">
                   <h3 className="admin-sub-title">Добавить новый экспонат</h3>
                   <form onSubmit={handleAddArt} className="add-art-form">
-                    <input type="text" placeholder="Название картины" required
-                      value={newArt.title} onChange={e => setNewArt({...newArt, title: e.target.value})} />
-                    
-                    <input type="number" placeholder="Оценка (USD $)" required
-                      value={newArt.price} onChange={e => setNewArt({...newArt, price: e.target.value})} />
-                    
+                    <input type="text" placeholder="Название картины" required value={newArt.title} onChange={e => setNewArt({...newArt, title: e.target.value})} />
+                    <input type="number" placeholder="Оценка (USD $)" required value={newArt.price} onChange={e => setNewArt({...newArt, price: e.target.value})} />
                     <div className="artist-select-group">
                       <select value={newArt.artist_id} onChange={e => setNewArt({...newArt, artist_id: e.target.value})}>
                         {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                       </select>
                       <button type="button" onClick={handleAddArtist} className="btn-add-small">+</button>
                     </div>
-
-                    <select 
-                      value={newArt.collection_id} 
-                      onChange={e => setNewArt({...newArt, collection_id: e.target.value})}
-                      className="edit-input"
-                    >
+                    <select value={newArt.collection_id} onChange={e => setNewArt({...newArt, collection_id: e.target.value})} className="edit-input">
                       <option value="">Без коллекции</option>
                       {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
-
-                    <input type="file" accept="image/*" required
-                      onChange={e => setNewArt({...newArt, image: e.target.files[0]})} />
-                    
+                    <input type="file" accept="image/*" required onChange={e => setNewArt({...newArt, image: e.target.files[0]})} />
                     <button type="submit" className="btn-primary">Опубликовать</button>
                   </form>
                 </div>
               </section>
             )}
 
-            {/* СЕКЦИЯ КАТАЛОГ */}
             <section id="catalog" className="catalog-section">
               <h2 className="section-title">Экспозиция</h2>
               <div className="art-grid">
@@ -367,75 +343,58 @@ function App() {
                     <div className="art-image-container" onClick={() => !isEditing && setSelectedArt(art)}>
                       <img src={art.image_url} alt={art.title} className="art-image" />
                       {art.is_sold && <div className="sold-badge">Sold</div>}
-                      
                       {user?.role === 'admin' && (
-                        <>
-                          {isEditing === art.id ? (
-                            <div className="admin-card-actions editing-mode">
-                              <button className="save-btn" onClick={handleUpdateArt}>💾</button>
-                              <button className="cancel-btn" onClick={cancelEdit}>✕</button>
-                            </div>
-                          ) : (
-                            <>
-                              <button className="delete-btn" onClick={() => deleteArtwork(art.id)}>✕</button>
-                              <button className="edit-btn" onClick={() => startEdit(art)}>✎</button>
-                            </>
-                          )}
-                        </>
+                        <>{isEditing === art.id ? (
+                          <div className="admin-card-actions editing-mode">
+                            <button className="save-btn" onClick={handleUpdateArt}>💾</button>
+                            <button className="cancel-btn" onClick={cancelEdit}>✕</button>
+                          </div>
+                        ) : (
+                          <><button className="delete-btn" onClick={() => deleteArtwork(art.id)}>✕</button>
+                            <button className="edit-btn" onClick={() => startEdit(art)}>✎</button></>
+                        )}</>
                       )}
                     </div>
-
                     <div className="art-info">
                       {isEditing === art.id ? (
                         <div className="edit-art-inline-form">
-                          <select 
-                            value={editForm.artist_id} 
-                            onChange={e => setEditForm({...editForm, artist_id: e.target.value})}
-                            className="edit-input artist-input"
-                          >
-                            {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                          </select>
-
-                          <select 
-                            value={editForm.collection_id || ''} 
-                            onChange={e => setEditForm({...editForm, collection_id: e.target.value})}
-                            className="edit-input"
-                          >
-                            <option value="">Без коллекции</option>
-                            {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                          </select>
-
-                          <input 
-                            type="text" 
-                            value={editForm.title} 
-                            onChange={e => setEditForm({...editForm, title: e.target.value})}
-                            className="edit-input title-input"
-                          />
-                          <div className="price-input-wrapper">
-                            <span>$</span>
-                            <input 
-                              type="number" 
-                              value={editForm.price} 
-                              onChange={e => setEditForm({...editForm, price: e.target.value})}
-                              className="edit-input price-input"
-                            />
+                          <select value={editForm.artist_id} onChange={e => setEditForm({...editForm, artist_id: e.target.value})} className="edit-input artist-input">
+                                  {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                </select>
+                                <select value={editForm.collection_id || ''} onChange={e => setEditForm({...editForm, collection_id: e.target.value})} className="edit-input">
+                                  <option value="">Без коллекции</option>
+                                  {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </select>
+                                <input type="text" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="edit-input title-input" />
+                                <div className="price-input-wrapper"><span>$</span><input type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} className="edit-input price-input" /></div>
+                              </div>
+                            ) : (
+                              <>
+                                <span 
+                                  className="art-artist clickable-artist" 
+                                  onClick={(e) => {
+                                    e.stopPropagation(); 
+                                    const artistObj = artists.find(a => a.name === art.artist);
+                                    if (artistObj) {
+                                      setSelectedArtist(artistObj);
+                                      setCurrentPage('authors');
+                                      window.scrollTo({top: 0, behavior: 'smooth'});
+                                    }
+                                  }}
+                                >
+                                  {art.artist}
+                                </span>
+                                <h3 className="art-title">{art.title}</h3>
+                                <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                              </>
+                            )}
                           </div>
-                        </div>
-                      ) : (
-                        <>
-                          <span className="art-artist">{art.artist}</span>
-                          <h3 className="art-title">{art.title}</h3>
-                          <p className="art-price">${art.price.toLocaleString('en-US')}</p>
-                        </>
-                      )}
-                    </div>
                   </div>
                 ))}
               </div>
             </section>
           </>
-        ) : (
-          /* СТРАНИЦА КОЛЛЕКЦИЙ */
+        ) : currentPage === 'collections' ? (
           <section className="collections-page">
             {selectedCollection ? (
               <>
@@ -444,49 +403,77 @@ function App() {
                   <h2 className="section-title">{selectedCollection.name}</h2>
                   <p className="collection-desc-full">{selectedCollection.description}</p>
                 </div>
-                
                 <div className="art-grid">
-                  {artworks
-                    .filter(art => art.collection_id === selectedCollection.id)
-                    .map(art => (
-                      <div 
-                        key={art.id} 
-                        className="art-card" 
-                        /* ДОБАВЛЯЕМ КЛИК ДЛЯ ПРОСМОТРА */
-                        onClick={() => setSelectedArt(art)} 
-                        style={{ cursor: 'zoom-in' }}
-                      >
-                        <div className="art-image-container">
-                          <img src={art.image_url} alt={art.title} className="art-image" />
-                        </div>
-                        <div className="art-info">
-                          <span className="art-artist">{art.artist}</span>
-                          <h3 className="art-title">{art.title}</h3>
-                          <p className="art-price">${art.price.toLocaleString('en-US')}</p>
-                        </div>
-                      </div>
-                    ))}
+                  {artworks.filter(art => art.collection_id === selectedCollection.id).map(art => (
+                    <div key={art.id} className="art-card" onClick={() => setSelectedArt(art)} style={{ cursor: 'zoom-in' }}>
+                      <div className="art-image-container"><img src={art.image_url} alt={art.title} className="art-image" /></div>
+                      <div className="art-info">
+                        <span 
+                          className="art-artist clickable-artist"
+                          onClick={(e) => {
+                            e.stopPropagation(); 
+                            const artistObj = artists.find(a => a.name === art.artist);
+                            if (artistObj) {
+                              setSelectedArtist(artistObj);
+                              setCurrentPage('authors');
+                              window.scrollTo({top: 0, behavior: 'smooth'});
+                            }
+                          }}
+                        >
+                          {art.artist}
+                        </span>
+                        <h3 className="art-title">{art.title}</h3>
+                        <p className="art-price">${art.price.toLocaleString('en-US')}</p></div>
+                    </div>
+                  ))}
                 </div>
               </>
             ) : (
-              <>
-                <h2 className="section-title">Наши Коллекции</h2>
+              <><h2 className="section-title">Наши Коллекции</h2>
                 <div className="collections-container">
                   {collections.map(col => {
                     const colArts = artworks.filter(a => a.collection_id === col.id);
                     return (
                       <div key={col.id} className="collection-view-card" onClick={() => setSelectedCollection(col)}>
-                        <div className="col-preview-images">
-                          {colArts.slice(0, 3).map(a => (
-                            <img key={a.id} src={a.image_url} alt="" className="col-mini-img" />
-                          ))}
-                          {colArts.length === 0 && <div className="col-empty">Пустая коллекция</div>}
+                        <div className="col-preview-images">{colArts.slice(0, 3).map(a => (<img key={a.id} src={a.image_url} alt="" className="col-mini-img" />))}{colArts.length === 0 && <div className="col-empty">Пустая коллекция</div>}</div>
+                        <div className="col-view-info"><h3>{col.name}</h3><p>{col.description || "Уникальное собрание шедевров."}</p><span className="col-count">Экспонатов: {colArts.length}</span></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </section>
+        ) : (
+          /* СТРАНИЦА АВТОРОВ */
+          <section className="authors-page">
+            {selectedArtist ? (
+              <>
+                <div className="author-header-nav">
+                  <button className="btn-back" onClick={() => setSelectedArtist(null)}>← Все авторы</button>
+                  <h2 className="section-title">{selectedArtist.name}</h2>
+                </div>
+                <div className="art-grid">
+                  {artworks.filter(art => art.artist === selectedArtist.name).map(art => (
+                    <div key={art.id} className="art-card" onClick={() => setSelectedArt(art)} style={{ cursor: 'zoom-in' }}>
+                      <div className="art-image-container"><img src={art.image_url} alt={art.title} className="art-image" /></div>
+                      <div className="art-info"><h3 className="art-title">{art.title}</h3><p className="art-price">${art.price.toLocaleString('en-US')}</p></div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <><h2 className="section-title">Мастера галереи</h2>
+                <div className="authors-list-container">
+                  {artists.map(artist => {
+                    const count = artworks.filter(a => a.artist === artist.name).length;
+                    return (
+                      <div key={artist.id} className="author-list-item" onClick={() => setSelectedArtist(artist)}>
+                        <div className="author-list-info">
+                          <span className="author-list-name">{artist.name}</span>
+                          <span className="author-list-count">Работ в коллекции: {count}</span>
                         </div>
-                        <div className="col-view-info">
-                          <h3>{col.name}</h3>
-                          <p>{col.description || "Уникальное собрание шедевров."}</p>
-                          <span className="col-count">Экспонатов: {colArts.length}</span>
-                        </div>
+                        <span className="author-list-arrow">→</span>
                       </div>
                     );
                   })}
@@ -496,6 +483,7 @@ function App() {
           </section>
         )}
       </main>
+
 
 
       {showLogin && (
