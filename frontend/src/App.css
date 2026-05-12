@@ -903,3 +903,73 @@ body {
   color: #ffd700; /* Золотой цвет при наведении */
   text-decoration: underline;
 }
+
+/* Статусы картин */
+.art-status-container {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.status-label.available {
+  color: #4caf50; /* Приглушенный зеленый */
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-label.sold {
+  color: #888;
+  border: 1px solid rgba(136, 136, 136, 0.3);
+  font-style: italic;
+}
+
+/* Кнопка покупки */
+.btn-buy-request {
+  background: transparent;
+  border: 1px solid #ffd700;
+  color: #ffd700;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.3s ease;
+}
+
+.btn-buy-request:hover {
+  background: #ffd700;
+  color: #000;
+}
+
+/* Стили для списка заявок в админке */
+.request-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 3px solid #ffd700;
+}
+
+.req-price {
+  margin-left: 15px;
+  color: #ffd700;
+}
+
+.btn-approve {
+  background: #4caf50;
+  border: none;
+  color: white;
+  padding: 5px 15px;
+  cursor: pointer;
+  margin-right: 10px;
+}

@@ -7,9 +7,73 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import shutil
+from fastapi.staticfiles import StaticFiles
+import os
+import uuid
 
+def migrate_db():
+    conn = sqlite3.connect('gallery.db')
+    cursor = conn.cursor()
+    # Добавляем колонку status, если её нет
+    try:
+        cursor.execute("ALTER TABLE purchase_requests ADD COLUMN status TEXT DEFAULT 'pending'")
+    except sqlite3.OperationalError:
+        pass 
+
+    # ДОБАВЬТЕ ЭТО: Добавляем колонку bank_statement, если её нет
+    try:
+        cursor.execute("ALTER TABLE purchase_requests ADD COLUMN bank_statement TEXT")
+        print("Колонка bank_statement успешно добавлена.")
+    except sqlite3.OperationalError:
+        print("Колонка bank_statement уже есть.")
+        
+    conn.commit()
+    conn.close()
+
+    
+def get_db_connection():
+ 
+    conn = sqlite3.connect('gallery.db')
+    conn.row_factory = sqlite3.Row  # Это позволяет обращаться к полям по именам, а не по индексам
+    return conn
+if not os.path.exists("static/statements"):
+    os.makedirs("static/statements", exist_ok=True)
 app = FastAPI()
+from fastapi.staticfiles import StaticFiles
+# Создаем абсолютный путь к папке со статикой
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+upload_dir = os.path.join(BASE_DIR, "static", "statements")
 
+if not os.path.exists(upload_dir):
+    os.makedirs(upload_dir, exist_ok=True)
+
+def fix_database_structure():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Проверяем наличие колонки bank_statement
+        cursor.execute("SELECT bank_statement FROM purchase_requests LIMIT 1")
+    except sqlite3.OperationalError:
+        # Если колонки нет — добавляем её
+        print("Добавляю колонку bank_statement в таблицу...")
+        cursor.execute("ALTER TABLE purchase_requests ADD COLUMN bank_statement TEXT")
+        conn.commit()
+        print("Колонка успешно добавлена!")
+    
+    # На всякий случай проверим и status
+    try:
+        cursor.execute("SELECT status FROM purchase_requests LIMIT 1")
+    except sqlite3.OperationalError:
+        cursor.execute("ALTER TABLE purchase_requests ADD COLUMN status TEXT DEFAULT 'pending'")
+        conn.commit()
+    
+    conn.close()
+
+# Вызываем функцию исправления
+fix_database_structure()
+
+# Монтируем статику, чтобы файлы были доступны по ссылке
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -50,31 +114,35 @@ def init_db():
     
     # Таблица картин
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS artworks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            price INTEGER,
-            artist_id INTEGER,
-            image_id INTEGER,
-            is_sold INTEGER DEFAULT 0,
-            FOREIGN KEY (artist_id) REFERENCES artists(id)
-        )
-    """)
+            CREATE TABLE IF NOT EXISTS artworks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT,
+                price INTEGER,
+                artist_id INTEGER,
+                collection_id INTEGER,
+                image_id INTEGER,
+                is_sold INTEGER DEFAULT 0,
+                FOREIGN KEY (artist_id) REFERENCES artists(id)
+            )
+        """)
 
 
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS artwork_collections (
+    CREATE TABLE IF NOT EXISTS purchase_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             artwork_id INTEGER,
-            collection_id INTEGER,
-            FOREIGN KEY (artwork_id) REFERENCES artworks(id),
-            FOREIGN KEY (collection_id) REFERENCES collections(id)
+            status TEXT DEFAULT 'pending',
+            bank_statement TEXT, 
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (artwork_id) REFERENCES artworks(id)
         )
     """)
-    
     conn.commit()
     conn.close()
 
 init_db()
+
 
 class AuthData(BaseModel):
     username: str
@@ -139,20 +207,29 @@ async def add_artwork(
 
 @app.get("/api/artworks")
 async def get_artworks():
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = get_db_connection()
     cursor = conn.cursor()
+    # МЫ ДОБАВИЛИ "ar.name AS artist"
     cursor.execute('''
-        SELECT a.id, a.title, a.price, a.is_sold, ar.name, a.image_id, a.collection_id
+        SELECT a.id, a.title, a.price, a.is_sold, ar.name AS artist, 
+               a.image_id, a.collection_id, u.username as owner
         FROM artworks a
         LEFT JOIN artists ar ON a.artist_id = ar.id
+        LEFT JOIN purchase_requests r ON a.id = r.artwork_id AND r.status = 'approved'
+        LEFT JOIN users u ON r.user_id = u.id
     ''')
     rows = cursor.fetchall()
     conn.close()
     return [
         {
-            "id": r[0], "title": r[1], "price": r[2], 
-            "is_sold": bool(r[3]), "artist": r[4] or "Unknown", 
-            "image_url": f"http://127.0.0.1:8000/api/image/{r[5]}", "collection_id": r[6]
+            "id": r["id"], 
+            "title": r["title"], 
+            "price": r["price"], 
+            "is_sold": bool(r["is_sold"]), 
+            "artist": r["artist"] or "Unknown", # Теперь этот ключ существует!
+            "image_url": f"http://127.0.0.1:8000/api/image/{r['image_id']}", 
+            "collection_id": r["collection_id"],
+            "owner": r["owner"]
         } for r in rows
     ]
 
@@ -187,6 +264,7 @@ async def get_collections():
     cols = cursor.fetchall()
     conn.close()
     return [{"id": c[0], "name": c[1], "description": c[2]} for c in cols]
+
 
 #  Авторизация 
 @app.post("/api/register")
@@ -257,6 +335,15 @@ async def assign_art_to_collection(data: dict):
         return {"status": "assigned"}
     finally:
         conn.close()
+    
+@app.delete("/api/purchase-requests/{request_id}")
+async def reject_request(request_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM purchase_requests WHERE id = ?", (request_id,))
+    conn.commit()
+    conn.close()
+    return {"status": "rejected"}
 
 @app.get("/api/users")
 async def get_users():
@@ -297,6 +384,112 @@ async def update_artwork(art_id: int, data: dict):
         raise HTTPException(status_code=500, detail="Ошибка при обновлении базы данных")
     finally:
         conn.close()
+
+# --- Система заявок на покупку ---
+
+class PurchaseRequestData(BaseModel):
+    user_id: int
+    artwork_id: int
+
+@app.post("/api/purchase-requests")
+async def create_purchase_request(
+    user_id: int = Form(...), 
+    artwork_id: int = Form(...), 
+    file: UploadFile = File(...)
+):
+    upload_dir = "static/statements"
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir, exist_ok=True)
+        
+    file_extension = os.path.splitext(file.filename)[1]
+    safe_filename = f"{uuid.uuid4()}{file_extension}"
+    file_path = os.path.join(upload_dir, safe_filename)
+    
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    file_url = f"http://127.0.0.1:8000/static/statements/{safe_filename}"
+    
+    # ИСПРАВЛЕНО: явно указываем 4 колонки, чтобы не было конфликта
+    cursor.execute(
+        "INSERT INTO purchase_requests (user_id, artwork_id, bank_statement, status) VALUES (?, ?, ?, ?)",
+        (user_id, artwork_id, file_url, 'pending')
+    )
+    conn.commit()
+    conn.close()
+    
+    return {"status": "success", "message": "Заявка принята"}
+@app.get("/api/purchase-requests")
+async def get_purchase_requests():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Добавь r.bank_statement в SELECT
+    cursor.execute("""
+        SELECT r.id, u.username, a.title as artwork_title, a.price, r.bank_statement 
+        FROM purchase_requests r
+        JOIN users u ON r.user_id = u.id
+        JOIN artworks a ON r.artwork_id = a.id
+        WHERE r.status = 'pending'
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+@app.post("/api/purchase-requests/{request_id}/approve")
+async def approve_purchase_request(request_id: int):
+    conn = get_db_connection()
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    # Ищем картину
+    cursor.execute("SELECT artwork_id FROM purchase_requests WHERE id = ?", (request_id,))
+    row = cursor.fetchone()
+    
+    if not row:
+        conn.close()
+        return {"error": "Заявка не найдена"}, 404
+        
+    artwork_id = row["artwork_id"]
+
+    # Обновляем картину и статусы заявок
+    cursor.execute("UPDATE artworks SET is_sold = 1 WHERE id = ?", (artwork_id,))
+    cursor.execute("UPDATE purchase_requests SET status = 'approved' WHERE id = ?", (request_id,))
+    cursor.execute("UPDATE purchase_requests SET status = 'rejected' WHERE artwork_id = ? AND id != ?", (artwork_id, request_id))
+    
+    conn.commit()
+    conn.close()
+    return {"message": "Success"}
+
+
+@app.get("/api/my-collection/{user_id}")
+async def get_my_collection(user_id: int):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Запрос находит картины, где статус заявки данного пользователя 'approved'
+    cursor.execute("""
+        SELECT a.id, a.title, a.price, a.image_id, ar.name AS artist
+        FROM artworks a
+        JOIN purchase_requests r ON a.id = r.artwork_id
+        JOIN artists ar ON a.artist_id = ar.id
+        WHERE r.user_id = ? AND r.status = 'approved'
+    """, (user_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    
+    return [
+        {
+            "id": r["id"], 
+            "title": r["title"], 
+            "price": r["price"],
+            "artist": r["artist"],
+            "image_url": f"http://127.0.0.1:8000/api/image/{r['image_id']}"
+        } for r in rows
+    ]
+
 
 if __name__ == "__main__":
     import uvicorn

@@ -2,18 +2,22 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('gallery_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+  
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('gallery_user') !== null;
+  });
   const [artworks, setArtworks] = useState([]);
   const [showLogin, setShowLogin] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [allUsers, setAllUsers] = useState([]);
-  // Добавлено collection_id в newArt
   const [newArt, setNewArt] = useState({ title: '', price: '', artist_id: 1, collection_id: '', image: null });
   const [artists, setArtists] = useState([]);
   const [isEditing, setIsEditing] = useState(null); 
-  // Добавлено collection_id в editForm
   const [editForm, setEditForm] = useState({ title: '', price: '', artist_id: '', collection_id: '' });
   const [collections, setCollections] = useState([]);
   const [newCollection, setNewCollection] = useState({ name: '', description: '' });
@@ -24,7 +28,87 @@ function App() {
   const [selectedArt, setSelectedArt] = useState(null);
   const closeLightbox = () => setSelectedArt(null);
   const [selectedArtist, setSelectedArtist] = useState(null);
+  const [purchaseRequests, setPurchaseRequests] = useState([]); // Для админа
+  const [myCollection, setMyCollection] = useState([]);
 
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const endpoint = isRegister ? '/api/register' : '/api/login';
+    
+    try {
+      const res = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginForm),
+      });
+
+      const data = await res.json();
+      console.log("Ответ сервера:", data); // Проверяем, что прислал сервер
+
+      if (res.ok && data.user) {
+        // 1. СТРОГО СНАЧАЛА ЗАПИСЫВАЕМ В LOCALSTORAGE
+        const userString = JSON.stringify(data.user);
+        localStorage.setItem('gallery_user', userString);
+        
+        console.log("Данные записаны в localStorage:", localStorage.getItem('gallery_user'));
+
+        // 2. ОБНОВЛЯЕМ СОСТОЯНИЕ REACT
+        setUser(data.user);
+        setIsLoggedIn(true);
+        setShowLogin(false);
+        
+        if (data.user.role === 'admin') {
+          fetchAllUsers();
+          fetchPurchaseRequests();
+        }
+      } else {
+        alert(data.detail || 'Ошибка авторизации');
+      }
+    } catch (err) {
+      console.error("Ошибка при входе:", err);
+      alert('Не удалось связаться с сервером');
+    }
+  };
+
+  const handlePurchaseRequest = async (artworkId) => {
+    // 1. Создаем невидимый инпут для выбора файла
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.pdf,image/*'; // Принимаем PDF или картинки
+
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // 2. Формируем данные для отправки
+      const formData = new FormData();
+      formData.append('user_id', user.id);
+      formData.append('artwork_id', artworkId);
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/purchase-requests', {
+          method: 'POST',
+
+          body: formData
+        });
+
+        if (res.ok) {
+          alert("Заявка и выписка успешно отправлены! Ожидайте решения администратора.");
+        } else {
+          const error = await res.json();
+          alert("Ошибка: " + (error.detail || "Не удалось отправить файл"));
+        }
+      } catch (err) {
+        console.error("Ошибка при отправке:", err);
+        alert("Нет связи с сервером");
+      }
+    };
+
+    // 3. Открываем окно выбора файла
+    fileInput.click();
+  };
 
   // Функция для формирования красивого текстового списка
   const generateArtList = () => {
@@ -87,6 +171,31 @@ function App() {
     setArtists(data);
   };
 
+  // Находится примерно в начале функции App
+// Проверка сессии при загрузке приложения
+  useEffect(() => {
+    const savedUser = localStorage.getItem('gallery_user');
+    if (savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        setUser(parsedUser);
+        setIsLoggedIn(true);
+        
+        // Если зашел админ, сразу подгружаем его данные
+        if (parsedUser.role === 'admin') {
+          fetchAllUsers();
+          fetchPurchaseRequests();
+        }
+      } catch (e) {
+        console.error("Ошибка чтения сессии", e);
+        localStorage.removeItem('gallery_user');
+      }
+    }
+    fetchArtworks();
+    fetchArtists();
+    fetchCollections();
+  }, []);
+
   useEffect(() => {
     fetchArtists();
   }, []);
@@ -123,9 +232,13 @@ function App() {
 
   useEffect(() => {
     if (isLoggedIn && user?.role === 'admin') {
-      fetchUsers();
+      fetchAllUsers();
+      fetchRequests();
     }
-  }, [isLoggedIn, user]);
+    fetchArtworks();
+    fetchArtists();
+    fetchCollections();
+  }, []);
 
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Вы уверены, что хотите исключить этого пользователя из клуба?")) return;
@@ -212,13 +325,58 @@ function App() {
             collection_id: editForm.collection_id ? Number(editForm.collection_id) : null
           })
     });
-
     if (res.ok) {
       setIsEditing(null);
       fetchArtworks();
     }
   };
 
+  const fetchRequests = async () => {
+    const res = await fetch('http://127.0.0.1:8000/api/purchase-requests');
+    const data = await res.json();
+    setPurchaseRequests(data);
+  };
+
+  const handleApproveRequest = async (requestId) => {
+    // Проверь, чтобы URL совпадал с бэкендом до символа
+    const res = await fetch(`http://127.0.0.1:8000/api/purchase-requests/${requestId}/approve`, {
+      method: 'POST', // Метод должен быть POST
+    });
+    
+    if (res.ok) {
+      fetchRequests();
+      fetchArtworks();
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    const res = await fetch(`http://127.0.0.1:8000/api/purchase-requests/${requestId}`, {
+      method: 'DELETE', // Метод должен быть DELETE
+    });
+    
+    if (res.ok) {
+      fetchRequests();
+    }
+  };
+
+const handleLogout = () => {
+    setIsLoggedIn(false);
+    setUser(null);
+    setCurrentPage('home');
+    
+    // ОЧИЩАЕМ ПАМЯТЬ БРАУЗЕРА
+    localStorage.removeItem('gallery_user');
+  };
+
+  const fetchMyCollection = async () => {
+    if (!user) return;
+    const res = await fetch(`http://127.0.0.1:8000/api/my-collection/${user.id}`);
+    if (res.ok) {
+      const data = await res.json();
+      setMyCollection(data);
+      setCurrentPage('my-collection'); // Переключаемся на новую страницу
+    }
+  };
   return (
     <div className="app-container">
       <nav className="side-nav">
@@ -236,31 +394,28 @@ function App() {
         </div>
       </nav>
 
-      <main className="main-content">
-        {currentPage === 'home' ? (
+<main className="main-content">
+        {/* 1. ГЛАВНАЯ СТРАНИЦА И КАТАЛОГ */}
+        {currentPage === 'home' && (
           <>
-            {/* СЕКЦИЯ HERO */}
             <section className="hero">
               <div className="hero-text">
                 <h1 className="hero-title">Искусство вне времени<br /><span>эксклюзивно.</span></h1>
-                
                 <p className="hero-description">
                   {isLoggedIn 
                     ? `Добро пожаловать, ${user?.username}. Вам открыт полный доступ к архивам закрытого клуба.` 
                     : 'Присоединяйтесь к сообществу коллекционеров, чтобы получить доступ к редким полотнам.'}
                 </p>
-
                 <div className="hero-controls">
                   {!isLoggedIn ? (
                     <button className="btn-primary" onClick={() => { setIsRegister(true); setShowLogin(true); }}>
                       Стать частью клуба
                     </button>
                   ) : (
-                    <button className="btn-primary" onClick={() => document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})}>
+                    <button className="btn-primary" onClick={fetchMyCollection}>
                       Моя коллекция
                     </button>
                   )}
-                  
                   <button className="btn-secondary" onClick={() => document.getElementById('catalog').scrollIntoView({behavior: 'smooth'})}>
                     Смотреть каталог
                   </button>
@@ -268,7 +423,6 @@ function App() {
               </div>
             </section>
 
-            {/* АДМИН-ПАНЕЛЬ (показывается только админу) */}
             {user?.role === 'admin' && (
               <section className="admin-panel-users">
                 <div className="container">
@@ -332,6 +486,26 @@ function App() {
                     <button type="submit" className="btn-primary">Опубликовать</button>
                   </form>
                 </div>
+                <div className="admin-requests-manager">
+                  <h2 className="admin-title">Заявки на приобретение</h2>
+                  <div className="requests-list">
+                    {purchaseRequests.map(req => (
+                      <div key={req.id} className="request-item">
+                        <div className="req-details">
+                          <strong>{req.username}</strong> — «{req.artwork_title}»
+                          <br />
+                          <a href={req.bank_statement} target="_blank" rel="noreferrer" className="doc-link">
+                             Проверить выписку из банка
+                          </a>
+                        </div>
+                        <div className="req-actions">
+                          <button className="btn-approve" onClick={() => handleApproveRequest(req.id)}>Одобрить</button>
+                          <button className="btn-reject" onClick={() => handleRejectRequest(req.id)}>Отклонить</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </section>
             )}
 
@@ -355,46 +529,54 @@ function App() {
                         )}</>
                       )}
                     </div>
+                    {user?.role === 'admin' && art.owner && (
+                      <div className="owner-badge">Владелец: <strong>{art.owner}</strong></div>
+                    )}
                     <div className="art-info">
                       {isEditing === art.id ? (
                         <div className="edit-art-inline-form">
                           <select value={editForm.artist_id} onChange={e => setEditForm({...editForm, artist_id: e.target.value})} className="edit-input artist-input">
-                                  {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                </select>
-                                <select value={editForm.collection_id || ''} onChange={e => setEditForm({...editForm, collection_id: e.target.value})} className="edit-input">
-                                  <option value="">Без коллекции</option>
-                                  {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                </select>
-                                <input type="text" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="edit-input title-input" />
-                                <div className="price-input-wrapper"><span>$</span><input type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} className="edit-input price-input" /></div>
-                              </div>
+                            {artists.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                          </select>
+                          <select value={editForm.collection_id || ''} onChange={e => setEditForm({...editForm, collection_id: e.target.value})} className="edit-input">
+                            <option value="">Без коллекции</option>
+                            {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                          <input type="text" value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} className="edit-input title-input" />
+                          <div className="price-input-wrapper"><span>$</span><input type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} className="edit-input price-input" /></div>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="art-artist clickable-artist" onClick={(e) => { e.stopPropagation(); const artistObj = artists.find(a => a.name === art.artist); if (artistObj) { setSelectedArtist(artistObj); setCurrentPage('authors'); window.scrollTo({top: 0, behavior: 'smooth'}); } }}>
+                            {art.artist}
+                          </span>
+                          <h3 className="art-title">{art.title}</h3>
+                          <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                          <div className="art-status-container">
+                            {art.is_sold ? (
+                              <span className="status-label sold">В частной коллекции</span>
                             ) : (
                               <>
-                                <span 
-                                  className="art-artist clickable-artist" 
-                                  onClick={(e) => {
-                                    e.stopPropagation(); 
-                                    const artistObj = artists.find(a => a.name === art.artist);
-                                    if (artistObj) {
-                                      setSelectedArtist(artistObj);
-                                      setCurrentPage('authors');
-                                      window.scrollTo({top: 0, behavior: 'smooth'});
-                                    }
-                                  }}
-                                >
-                                  {art.artist}
-                                </span>
-                                <h3 className="art-title">{art.title}</h3>
-                                <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                                <span className="status-label available">Доступна</span>
+                                {isLoggedIn && user?.role !== 'admin' && (
+                                  <button className="btn-buy-request" onClick={() => handlePurchaseRequest(art.id)}>Оставить заявку</button>
+                                )}
+                                {!isLoggedIn && <span className="login-hint" onClick={() => setShowLogin(true)}>Войдите, чтобы купить</span>}
                               </>
                             )}
                           </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
           </>
-        ) : currentPage === 'collections' ? (
+        )}
+
+        {/* 2. СТРАНИЦА КОЛЛЕКЦИЙ */}
+        {currentPage === 'collections' && (
           <section className="collections-page">
             {selectedCollection ? (
               <>
@@ -408,28 +590,19 @@ function App() {
                     <div key={art.id} className="art-card" onClick={() => setSelectedArt(art)} style={{ cursor: 'zoom-in' }}>
                       <div className="art-image-container"><img src={art.image_url} alt={art.title} className="art-image" /></div>
                       <div className="art-info">
-                        <span 
-                          className="art-artist clickable-artist"
-                          onClick={(e) => {
-                            e.stopPropagation(); 
-                            const artistObj = artists.find(a => a.name === art.artist);
-                            if (artistObj) {
-                              setSelectedArtist(artistObj);
-                              setCurrentPage('authors');
-                              window.scrollTo({top: 0, behavior: 'smooth'});
-                            }
-                          }}
-                        >
+                        <span className="art-artist clickable-artist" onClick={(e) => { e.stopPropagation(); const artistObj = artists.find(a => a.name === art.artist); if (artistObj) { setSelectedArtist(artistObj); setCurrentPage('authors'); window.scrollTo({top: 0, behavior: 'smooth'}); } }}>
                           {art.artist}
                         </span>
                         <h3 className="art-title">{art.title}</h3>
-                        <p className="art-price">${art.price.toLocaleString('en-US')}</p></div>
+                        <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </>
             ) : (
-              <><h2 className="section-title">Наши Коллекции</h2>
+              <>
+                <h2 className="section-title">Наши Коллекции</h2>
                 <div className="collections-container">
                   {collections.map(col => {
                     const colArts = artworks.filter(a => a.collection_id === col.id);
@@ -444,8 +617,10 @@ function App() {
               </>
             )}
           </section>
-        ) : (
-          /* СТРАНИЦА АВТОРОВ */
+        )}
+
+        {/* 3. СТРАНИЦА АВТОРОВ */}
+        {currentPage === 'authors' && (
           <section className="authors-page">
             {selectedArtist ? (
               <>
@@ -463,7 +638,8 @@ function App() {
                 </div>
               </>
             ) : (
-              <><h2 className="section-title">Мастера галереи</h2>
+              <>
+                <h2 className="section-title">Мастера галереи</h2>
                 <div className="authors-list-container">
                   {artists.map(artist => {
                     const count = artworks.filter(a => a.artist === artist.name).length;
@@ -479,6 +655,34 @@ function App() {
                   })}
                 </div>
               </>
+            )}
+          </section>
+        )}
+
+        {/* 4. СТРАНИЦА МОЕЙ КОЛЛЕКЦИИ */}
+        {currentPage === 'my-collection' && (
+          <section className="my-collection-page">
+            <h2 className="section-title">Ваше частное собрание</h2>
+            {myCollection.length > 0 ? (
+              <div className="art-grid">
+                {myCollection.map(art => (
+                  <div key={art.id} className="art-card">
+                    <div className="art-image-container">
+                      <img src={art.image_url} alt={art.title} className="art-image" />
+                    </div>
+                    <div className="art-info">
+                      <span className="art-artist">{art.artist}</span>
+                      <h3 className="art-title">{art.title}</h3>
+                      <p className="art-price">${art.price.toLocaleString('en-US')}</p>
+                      <span className="status-label sold">В вашей коллекции</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-collection-message">
+                <p>В данный момент в вашей коллекции нет картин</p>
+              </div>
             )}
           </section>
         )}
