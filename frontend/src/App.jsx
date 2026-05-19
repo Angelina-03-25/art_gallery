@@ -99,12 +99,11 @@ function App() {
 
 
   
-  // Функция для формирования красивого текстового списка
+
   const generateArtList = () => {
     if (artworks.length === 0) return "Список пуст";
     
     const list = artworks.map((art, index) => {
-      // Находим название коллекции по ID, если оно есть
       const col = collections.find(c => c.id === art.collection_id);
       const colName = col ? `[Коллекция: ${col.name}]` : '[Без коллекции]';
       
