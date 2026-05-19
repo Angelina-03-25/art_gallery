@@ -308,7 +308,7 @@ function App() {
       title: art.title, 
       price: art.price, 
       artist_id: artist ? artist.id : (artists[0]?.id || ''),
-      collection_id: art.collection_id || '' // Подгружаем ID коллекции при старте правки
+      collection_id: art.collection_id || '' 
     });
   };
 
@@ -341,9 +341,8 @@ function App() {
   };
 
   const handleApproveRequest = async (requestId) => {
-    // Проверь, чтобы URL совпадал с бэкендом до символа
     const res = await fetch(`http://127.0.0.1:8000/api/purchase-requests/${requestId}/approve`, {
-      method: 'POST', // Метод должен быть POST
+      method: 'POST', 
     });
     
     if (res.ok) {
@@ -354,7 +353,7 @@ function App() {
 
   const handleRejectRequest = async (requestId) => {
     const res = await fetch(`http://127.0.0.1:8000/api/purchase-requests/${requestId}`, {
-      method: 'DELETE', // Метод должен быть DELETE
+      method: 'DELETE',
     });
     
     if (res.ok) {
@@ -367,7 +366,6 @@ const handleLogout = () => {
     setUser(null);
     setCurrentPage('home');
     
-    // ОЧИЩАЕМ ПАМЯТЬ БРАУЗЕРА
     localStorage.removeItem('gallery_user');
   };
 
@@ -377,7 +375,7 @@ const handleLogout = () => {
     if (res.ok) {
       const data = await res.json();
       setMyCollection(data);
-      setCurrentPage('my-collection'); // Переключаемся на новую страницу
+      setCurrentPage('my-collection'); 
     }
   };
   return (
