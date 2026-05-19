@@ -47,7 +47,6 @@ function App() {
         setUser(data.user);
         setShowLogin(false);
         
-        // СОХРАНЯЕМ СЕССИЮ
         localStorage.setItem('gallery_user', JSON.stringify(data.user));
         
         if (data.user.role === 'admin') {
@@ -63,16 +62,14 @@ function App() {
   };
 
   const handlePurchaseRequest = async (artworkId) => {
-    // 1. Создаем невидимый инпут для выбора файла
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = '.pdf,image/*'; // Принимаем PDF или картинки
+    fileInput.accept = '.pdf,image/*'; 
 
     fileInput.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
-      // 2. Формируем данные для отправки
       const formData = new FormData();
       formData.append('user_id', user.id);
       formData.append('artwork_id', artworkId);
@@ -97,7 +94,6 @@ function App() {
       }
     };
 
-    // 3. Открываем окно выбора файла
     fileInput.click();
   };
 
