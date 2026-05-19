@@ -112,7 +112,6 @@ def init_db():
         )
     """)
     
-    # Таблица картин
     cursor.execute("""
             CREATE TABLE IF NOT EXISTS artworks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -143,12 +142,10 @@ def init_db():
 
 init_db()
 
-
 class AuthData(BaseModel):
     username: str
     password: str
 
-#  Эндпоинты авторов 
 @app.post("/api/artists")
 async def add_artist(data: dict):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -168,13 +165,12 @@ async def get_artists():
     conn.close()
     return [{"id": a[0], "name": a[1]} for a in artists]
 
-# Эндпоинты картин 
 @app.post("/api/artworks")
 async def add_artwork(
     title: str = Form(...),
     price: int = Form(...),
     artist_id: int = Form(...),
-    collection_id: int = Form(None), # Убедись, что тут написано collection_id
+    collection_id: int = Form(None), 
     image: UploadFile = File(...)
 ):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -184,14 +180,12 @@ async def add_artwork(
         max_id = cursor.fetchone()[0] or 0
         new_id = max_id + 1
         
-        # Сохранение фото
         img_dir = os.path.join(BASE_DIR, "public", "img")
         os.makedirs(img_dir, exist_ok=True)
         file_location = os.path.join(img_dir, f"{new_id}.jpg")
         with open(file_location, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
             
-        # Запись в базу (БЕЗ json.loads)
         cursor.execute('''
             INSERT INTO artworks (title, price, artist_id, collection_id, image_id, is_sold) 
             VALUES (?, ?, ?, ?, ?, 0)
@@ -226,7 +220,7 @@ async def get_artworks():
             "title": r["title"], 
             "price": r["price"], 
             "is_sold": bool(r["is_sold"]), 
-            "artist": r["artist"] or "Unknown", # Теперь этот ключ существует!
+            "artist": r["artist"] or "Unknown", 
             "image_url": f"http://127.0.0.1:8000/api/image/{r['image_id']}", 
             "collection_id": r["collection_id"],
             "owner": r["owner"]
