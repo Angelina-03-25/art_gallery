@@ -35,39 +35,30 @@ function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     const endpoint = isRegister ? '/api/register' : '/api/login';
-    
     try {
       const res = await fetch(`http://127.0.0.1:8000${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginForm),
       });
-
       const data = await res.json();
-      console.log("Ответ сервера:", data); // Проверяем, что прислал сервер
-
-      if (res.ok && data.user) {
-        // 1. СТРОГО СНАЧАЛА ЗАПИСЫВАЕМ В LOCALSTORAGE
-        const userString = JSON.stringify(data.user);
-        localStorage.setItem('gallery_user', userString);
-        
-        console.log("Данные записаны в localStorage:", localStorage.getItem('gallery_user'));
-
-        // 2. ОБНОВЛЯЕМ СОСТОЯНИЕ REACT
-        setUser(data.user);
+      if (res.ok) {
         setIsLoggedIn(true);
+        setUser(data.user);
         setShowLogin(false);
         
+        // СОХРАНЯЕМ СЕССИЮ
+        localStorage.setItem('gallery_user', JSON.stringify(data.user));
+        
         if (data.user.role === 'admin') {
-          fetchAllUsers();
-          fetchPurchaseRequests();
+          fetchUsers();
+          fetchRequests();
         }
       } else {
-        alert(data.detail || 'Ошибка авторизации');
+        alert(data.detail || 'Ошибка доступа');
       }
     } catch (err) {
-      console.error("Ошибка при входе:", err);
-      alert('Не удалось связаться с сервером');
+      alert('Ошибка сервера');
     }
   };
 
@@ -110,6 +101,8 @@ function App() {
     fileInput.click();
   };
 
+
+  
   // Функция для формирования красивого текстового списка
   const generateArtList = () => {
     if (artworks.length === 0) return "Список пуст";
@@ -183,8 +176,8 @@ function App() {
         
         // Если зашел админ, сразу подгружаем его данные
         if (parsedUser.role === 'admin') {
-          fetchAllUsers();
-          fetchPurchaseRequests();
+          fetchUsers();
+          fetchReuests();
         }
       } catch (e) {
         console.error("Ошибка чтения сессии", e);
@@ -232,7 +225,7 @@ function App() {
 
   useEffect(() => {
     if (isLoggedIn && user?.role === 'admin') {
-      fetchAllUsers();
+      fetchUsers();
       fetchRequests();
     }
     fetchArtworks();
@@ -276,6 +269,11 @@ function App() {
           alert("Регистрация успешна! Теперь войдите.");
           setIsRegister(false);
         } else {
+          // 1. Сначала сохраняем данные в память браузера
+          localStorage.setItem('gallery_user', JSON.stringify(data.user));
+          
+          // 2. Затем обновляем состояния React. 
+          // Изменение этих стейтов автоматически активирует наш новый useEffect (Хук №2)
           setUser(data.user);
           setIsLoggedIn(true);
           setShowLogin(false);
@@ -289,14 +287,23 @@ function App() {
   };
 
   const deleteArtwork = async (id) => {
-    if (!window.confirm("Удалить этот шедевр из базы?")) return;
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/api/artworks/${id}`, { method: 'DELETE' });
-      if (res.ok) fetchArtworks();
-    } catch (err) {
-      alert("Ошибка при удалении");
-    }
-  };
+      if (!window.confirm("Вы уверены, что хотите удалить этот экспонат из галереи?")) return;
+      
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/artworks/${id}`, {
+          method: 'DELETE',
+        });
+        if (res.ok) {
+          // Локально убираем картину из стейта, чтобы она сразу пропала с экрана без перезагрузки F5
+          setArtworks(artworks.filter(art => art.id !== id));
+        } else {
+          const data = await res.json();
+          alert(data.detail || "Ошибка при удалении картины");
+        }
+      } catch (err) {
+        alert("Ошибка соединения с сервером");
+      }
+    };
 
   const startEdit = (art) => {
     setIsEditing(art.id);
@@ -381,7 +388,7 @@ const handleLogout = () => {
     <div className="app-container">
       <nav className="side-nav">
         <div className="logo" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>AG</div>
-        <div className="nav-auth" onClick={() => isLoggedIn ? (setIsLoggedIn(false), setUser(null)) : setShowLogin(true)}>
+        <div className="nav-auth" onClick={() => isLoggedIn ? handleLogout() : setShowLogin(true)}>
           {isLoggedIn ? 'Logout' : 'Login'}
         </div>
         <div className="nav-links">

@@ -306,18 +306,27 @@ async def get_image(image_id: str):
 async def delete_collection(col_id: int):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
-    # Проверяем существование
+    
+    # Проверяем существование коллекции
     cursor.execute("SELECT id FROM collections WHERE id = ?", (col_id,))
     if not cursor.fetchone():
         conn.close()
         raise HTTPException(status_code=404, detail="Коллекция не найдена")
     
-
-    cursor.execute("DELETE FROM artwork_collections WHERE collection_id = ?", (col_id,))
-    cursor.execute("DELETE FROM collections WHERE id = ?", (col_id,))
-    conn.commit()
-    conn.close()
-    return {"status": "success"}
+    try:
+        # Вместо удаления из несуществующей таблицы artwork_collections,
+        # мы убираем привязку к этой коллекции у всех картин (ставим NULL)
+        cursor.execute("UPDATE artworks SET collection_id = NULL WHERE collection_id = ?", (col_id,))
+        
+        # Теперь удаляем саму коллекцию
+        cursor.execute("DELETE FROM collections WHERE id = ?", (col_id,))
+        conn.commit()
+        return {"status": "success"}
+    except Exception as e:
+        print(f"Ошибка при удалении коллекции: {e}")
+        raise HTTPException(status_code=500, detail="Ошибка базы данных при удалении")
+    finally:
+        conn.close()
 
 #  Добавление существующей картины в коллекцию
 @app.post("/api/collections/assign")
