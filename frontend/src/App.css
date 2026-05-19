@@ -170,23 +170,22 @@ body {
 
 .art-grid {
   display: grid;
-  /* На больших экранах — автозаполнение, минимум 250px */
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
   padding: 20px 0;
 }
 @media (max-width: 600px) {
   .art-grid {
-    /* Жёстко две колонки, даже если экран очень узкий */
+
     grid-template-columns: repeat(2, 1fr) !important;
-    gap: 10px; /* Уменьшаем зазоры, чтобы влезло больше красоты */
+    gap: 10px; /
   .lightbox-image-wrapper {
     height: 70vh;
   }
   }
 
   .art-info h3 {
-    font-size: 0.9rem; /* Чуть уменьшим шрифт заголовков на мобилках */
+    font-size: 0.9rem; 
   }
 
   .art-price {
@@ -227,7 +226,6 @@ body {
   letter-spacing: 2px;
 }
 
-/* Стилизация кнопок удаления и редактирования в углах */
 .delete-btn {
   position: absolute;
   top: 15px;
@@ -276,7 +274,6 @@ body {
 .delete-btn:hover { background: #ff4d4d; color: white; border-color: #ff4d4d; }
 .edit-btn:hover { background: var(--gold); color: black; border-color: var(--gold); }
 
-/* Кнопки при активном редактировании */
 .admin-card-actions.editing-mode {
   position: absolute;
   top: 15px;
@@ -305,7 +302,6 @@ body {
 .cancel-btn { border-color: #444; color: #888; }
 .cancel-btn:hover { background: #444; color: white; }
 
-/* Форма редактирования в инфо-блоке */
 .art-info {
   margin-top: 25px;
 }
@@ -351,7 +347,6 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Остальные стили без изменений */
 .art-artist {
   font-size: 11px;
   text-transform: uppercase;
@@ -554,7 +549,7 @@ body {
   cursor: pointer;
 }
 
-/* Секция коллекций на главной */
+
 .collections-section {
   padding: 100px 5%;
 }
@@ -593,7 +588,7 @@ body {
 }
 
 .simple-text-list {
-  background: #111; /* Глубокий черный фон */
+  background: #111; 
   padding: 20px;
   border-radius: 4px;
   border: 1px solid #222;
@@ -601,10 +596,10 @@ body {
 }
 
 .text-list-item {
-  color: #ccc; /* Спокойный серый цвет текста */
-  font-size: 14px; /* Единый размер */
-  font-family: 'Inter', sans-serif; /* Тот же шрифт, что и везде */
-  line-height: 1.8; /* Расстояние между строками для читаемости */
+  color: #ccc; 
+  font-size: 14px; 
+  font-family: 'Inter', sans-serif;
+  line-height: 1.8; 
   border-bottom: 1px solid #1a1a1a;
   padding: 5px 0;
 }
@@ -613,7 +608,7 @@ body {
   border-bottom: none;
 }
 
-/* Кнопка в стиле сайта */
+
 .btn-primary {
   background: none;
   border: 1px solid #444;
@@ -637,7 +632,7 @@ body {
 }
 
 .nav-link:hover, .nav-link.active {
-  color: #ffd700; /* Золотой цвет как в твоем стиле */
+  color: #ffd700; 
 }
 
 .collections-page {
@@ -737,14 +732,14 @@ body {
 }
 
 
-/* Фон модального окна */
+
 .lightbox-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.95); /* Очень темный фон */
+  background: rgba(0, 0, 0, 0.95); 
   display: flex;
   justify-content: center;
   align-items: center;
