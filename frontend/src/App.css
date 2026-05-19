@@ -753,7 +753,7 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
-/* Контейнер контента */
+
 .lightbox-content {
   position: relative;
   max-width: 95vw;
@@ -764,7 +764,7 @@ body {
   cursor: default;
 }
 
-/* Кнопка закрытия */
+
 .lightbox-close {
   position: fixed;
   top: 20px;
@@ -782,13 +782,12 @@ body {
   color: #ffd700;
 }
 
-/* Обертка для самой картинки */
 .lightbox-image-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
-  height: 80vh; /* Ограничиваем высоту, чтобы осталось место для текста под фото */
+  height: 80vh; 
   overflow: hidden;
 }
 
@@ -802,7 +801,7 @@ body {
   border: 1px solid #333;
 }
 
-/* Инфо под картиной */
+
 .lightbox-details {
   text-align: center;
   margin-top: 20px;
@@ -832,7 +831,7 @@ body {
   to { opacity: 1; }
 }
 
-/* Стили для страницы авторов списком */
+
 .authors-list-container {
   display: flex;
   flex-direction: column;
@@ -850,7 +849,7 @@ body {
   align-items: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  height: 80px; /* Фиксированная высота для всех */
+  height: 80px;
 }
 
 .author-list-item:hover {
