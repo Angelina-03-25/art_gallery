@@ -233,7 +233,7 @@ async def get_artworks():
         } for r in rows
     ]
 
-# Эндпоинты коллекций 
+
 @app.post("/api/collections")
 async def create_collection(data: dict):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -265,8 +265,6 @@ async def get_collections():
     conn.close()
     return [{"id": c[0], "name": c[1], "description": c[2]} for c in cols]
 
-
-#  Авторизация 
 @app.post("/api/register")
 async def register(data: AuthData):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -294,7 +292,6 @@ async def login(data: AuthData):
         return {"status": "success", "user": {"id": user[0], "username": user[1], "role": user[3]}}
     raise HTTPException(status_code=401, detail="Ошибка входа")
 
-# --- Остальные функции (удаление, изображения) ---
 @app.get("/api/image/{image_id}")
 async def get_image(image_id: str):
     image_path = os.path.join(BASE_DIR, "public", "img", f"{image_id}.jpg")
@@ -307,7 +304,6 @@ async def delete_collection(col_id: int):
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
     
-    # Проверяем существование коллекции
     cursor.execute("SELECT id FROM collections WHERE id = ?", (col_id,))
     if not cursor.fetchone():
         conn.close()
@@ -390,7 +386,6 @@ async def update_artwork(art_id: int, data: dict):
     finally:
         conn.close()
 
-# --- Система заявок на покупку ---
 
 class PurchaseRequestData(BaseModel):
     user_id: int
