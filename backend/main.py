@@ -314,11 +314,8 @@ async def delete_collection(col_id: int):
         raise HTTPException(status_code=404, detail="Коллекция не найдена")
     
     try:
-        # Вместо удаления из несуществующей таблицы artwork_collections,
-        # мы убираем привязку к этой коллекции у всех картин (ставим NULL)
         cursor.execute("UPDATE artworks SET collection_id = NULL WHERE collection_id = ?", (col_id,))
         
-        # Теперь удаляем саму коллекцию
         cursor.execute("DELETE FROM collections WHERE id = ?", (col_id,))
         conn.commit()
         return {"status": "success"}
@@ -328,7 +325,6 @@ async def delete_collection(col_id: int):
     finally:
         conn.close()
 
-#  Добавление существующей картины в коллекцию
 @app.post("/api/collections/assign")
 async def assign_art_to_collection(data: dict):
 
