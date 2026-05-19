@@ -159,8 +159,6 @@ function App() {
     setArtists(data);
   };
 
-  // Находится примерно в начале функции App
-// Проверка сессии при загрузке приложения
   useEffect(() => {
     const savedUser = localStorage.getItem('gallery_user');
     if (savedUser) {
@@ -169,7 +167,6 @@ function App() {
         setUser(parsedUser);
         setIsLoggedIn(true);
         
-        // Если зашел админ, сразу подгружаем его данные
         if (parsedUser.role === 'admin') {
           fetchUsers();
           fetchReuests();
@@ -264,11 +261,8 @@ function App() {
           alert("Регистрация успешна! Теперь войдите.");
           setIsRegister(false);
         } else {
-          // 1. Сначала сохраняем данные в память браузера
           localStorage.setItem('gallery_user', JSON.stringify(data.user));
           
-          // 2. Затем обновляем состояния React. 
-          // Изменение этих стейтов автоматически активирует наш новый useEffect (Хук №2)
           setUser(data.user);
           setIsLoggedIn(true);
           setShowLogin(false);
@@ -289,7 +283,6 @@ function App() {
           method: 'DELETE',
         });
         if (res.ok) {
-          // Локально убираем картину из стейта, чтобы она сразу пропала с экрана без перезагрузки F5
           setArtworks(artworks.filter(art => art.id !== id));
         } else {
           const data = await res.json();

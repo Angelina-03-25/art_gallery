@@ -889,7 +889,7 @@ body {
   opacity: 1;
 }
 
-/* Навигация внутри страницы автора */
+
 .author-header-nav {
   margin-bottom: 40px;
 }
@@ -900,11 +900,10 @@ body {
 }
 
 .clickable-artist:hover {
-  color: #ffd700; /* Золотой цвет при наведении */
+  color: #ffd700;
   text-decoration: underline;
 }
 
-/* Статусы картин */
 .art-status-container {
   margin-top: 15px;
   display: flex;
@@ -923,7 +922,7 @@ body {
 }
 
 .status-label.available {
-  color: #4caf50; /* Приглушенный зеленый */
+  color: #4caf50; 
   border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
@@ -933,7 +932,6 @@ body {
   font-style: italic;
 }
 
-/* Кнопка покупки */
 .btn-buy-request {
   background: transparent;
   border: 1px solid #ffd700;
