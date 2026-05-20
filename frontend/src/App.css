@@ -942,7 +942,6 @@ body {
   color: #000;
 }
 
-/* Стили для списка заявок в админке */
 .request-item {
   background: rgba(255, 255, 255, 0.05);
   padding: 15px;
