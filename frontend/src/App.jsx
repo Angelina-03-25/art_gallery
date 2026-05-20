@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+
 function App() {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('gallery_user');

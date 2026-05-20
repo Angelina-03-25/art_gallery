@@ -11,6 +11,7 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -109,13 +110,6 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
-/* body {
-  margin: 0;
-  padding: 0;
-  background-color: #0a0a0a;
-  color: white;
-  -webkit-font-smoothing: antialiased;
-} */
 
 .admin-table {
   width: 100%;
