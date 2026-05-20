@@ -218,7 +218,6 @@ async def get_artworks():
         } for r in rows
     ]
 
-
 @app.post("/api/collections")
 async def create_collection(data: dict):
     conn = sqlite3.connect(DATABASE_PATH)
@@ -469,7 +468,6 @@ async def get_my_collection(user_id: int):
             "image_url": f"http://127.0.0.1:8000/api/image/{r['image_id']}"
         } for r in rows
     ]
-
 
 if __name__ == "__main__":
     import uvicorn
