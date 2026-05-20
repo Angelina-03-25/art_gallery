@@ -11,17 +11,14 @@ from fastapi.staticfiles import StaticFiles
 import os
 import uuid
 
-
 def migrate_db():
     conn = sqlite3.connect('gallery.db')
     cursor = conn.cursor()
-    # Добавляем колонку status, если её нет
     try:
         cursor.execute("ALTER TABLE purchase_requests ADD COLUMN status TEXT DEFAULT 'pending'")
     except sqlite3.OperationalError:
         pass 
 
-    # ДОБАВЬТЕ ЭТО: Добавляем колонку bank_statement, если её нет
     try:
         cursor.execute("ALTER TABLE purchase_requests ADD COLUMN bank_statement TEXT")
         print("Колонка bank_statement успешно добавлена.")
@@ -35,13 +32,13 @@ def migrate_db():
 def get_db_connection():
  
     conn = sqlite3.connect('gallery.db')
-    conn.row_factory = sqlite3.Row  # Это позволяет обращаться к полям по именам, а не по индексам
+    conn.row_factory = sqlite3.Row  
     return conn
 if not os.path.exists("static/statements"):
     os.makedirs("static/statements", exist_ok=True)
 app = FastAPI()
 from fastapi.staticfiles import StaticFiles
-# Создаем абсолютный путь к папке со статикой
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 upload_dir = os.path.join(BASE_DIR, "static", "statements")
 
@@ -52,16 +49,13 @@ def fix_database_structure():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # Проверяем наличие колонки bank_statement
         cursor.execute("SELECT bank_statement FROM purchase_requests LIMIT 1")
     except sqlite3.OperationalError:
-        # Если колонки нет — добавляем её
         print("Добавляю колонку bank_statement в таблицу...")
         cursor.execute("ALTER TABLE purchase_requests ADD COLUMN bank_statement TEXT")
         conn.commit()
         print("Колонка успешно добавлена!")
     
-    # На всякий случай проверим и status
     try:
         cursor.execute("SELECT status FROM purchase_requests LIMIT 1")
     except sqlite3.OperationalError:
@@ -70,10 +64,8 @@ def fix_database_structure():
     
     conn.close()
 
-# Вызываем функцию исправления
 fix_database_structure()
 
-# Монтируем статику, чтобы файлы были доступны по ссылке
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 app.add_middleware(
     CORSMiddleware,
@@ -86,7 +78,6 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATABASE_PATH = os.path.join(BASE_DIR, "gallery.db")
 
-# Инициализация БД 
 def init_db():
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
@@ -204,7 +195,6 @@ async def add_artwork(
 async def get_artworks():
     conn = get_db_connection()
     cursor = conn.cursor()
-    # МЫ ДОБАВИЛИ "ar.name AS artist"
     cursor.execute('''
         SELECT a.id, a.title, a.price, a.is_sold, ar.name AS artist, 
                a.image_id, a.collection_id, u.username as owner
@@ -408,7 +398,6 @@ async def create_purchase_request(
     
     file_url = f"http://127.0.0.1:8000/static/statements/{safe_filename}"
     
-    # ИСПРАВЛЕНО: явно указываем 4 колонки, чтобы не было конфликта
     cursor.execute(
         "INSERT INTO purchase_requests (user_id, artwork_id, bank_statement, status) VALUES (?, ?, ?, ?)",
         (user_id, artwork_id, file_url, 'pending')
@@ -421,7 +410,6 @@ async def create_purchase_request(
 async def get_purchase_requests():
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Добавь r.bank_statement в SELECT
     cursor.execute("""
         SELECT r.id, u.username, a.title as artwork_title, a.price, r.bank_statement 
         FROM purchase_requests r
@@ -440,7 +428,6 @@ async def approve_purchase_request(request_id: int):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
-    # Ищем картину
     cursor.execute("SELECT artwork_id FROM purchase_requests WHERE id = ?", (request_id,))
     row = cursor.fetchone()
     
@@ -450,7 +437,6 @@ async def approve_purchase_request(request_id: int):
         
     artwork_id = row["artwork_id"]
 
-    # Обновляем картину и статусы заявок
     cursor.execute("UPDATE artworks SET is_sold = 1 WHERE id = ?", (artwork_id,))
     cursor.execute("UPDATE purchase_requests SET status = 'approved' WHERE id = ?", (request_id,))
     cursor.execute("UPDATE purchase_requests SET status = 'rejected' WHERE artwork_id = ? AND id != ?", (artwork_id, request_id))
@@ -464,7 +450,6 @@ async def approve_purchase_request(request_id: int):
 async def get_my_collection(user_id: int):
     conn = get_db_connection()
     cursor = conn.cursor()
-    # Запрос находит картины, где статус заявки данного пользователя 'approved'
     cursor.execute("""
         SELECT a.id, a.title, a.price, a.image_id, ar.name AS artist
         FROM artworks a
