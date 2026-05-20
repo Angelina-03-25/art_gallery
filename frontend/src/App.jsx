@@ -682,7 +682,6 @@ const handleLogout = () => {
       </main>
 
 
-
       {showLogin && (
         <div className="modal-overlay" onClick={() => setShowLogin(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -703,6 +702,7 @@ const handleLogout = () => {
           </div>
         </div>
       )}
+
 
       {selectedArt && (
         <div className="lightbox-overlay" onClick={closeLightbox}>
