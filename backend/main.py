@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 import uuid
 
+
 def migrate_db():
     conn = sqlite3.connect('gallery.db')
     cursor = conn.cursor()
